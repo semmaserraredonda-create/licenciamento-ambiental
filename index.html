@@ -1065,7 +1065,7 @@ tbody td {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
       Acessar o Sistema
     </button>
-    <div class="login-hint">Credenciais demo: admin / admin123 · tecnico / tec123</div>
+    <div class="login-hint">Sistema de Licenciamento Ambiental — SEMMA Serra Redonda/PB</div>
   </div>
 </div>
 
@@ -1320,19 +1320,40 @@ tbody td {
       <div class="grid2">
         <div class="field span2">
           <label>Nome / Razão Social <span class="req">*</span></label>
-          <input id="np-req" placeholder="Nome completo ou razão social">
+          <input id="np-req" placeholder="NOME COMPLETO OU RAZÃO SOCIAL" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
         </div>
         <div class="field">
           <label>CPF / CNPJ <span class="req">*</span></label>
-          <input id="np-doc" placeholder="000.000.000-00 ou 00.000.000/0001-00" oninput="mascaraCpfCnpj(this)" maxlength="18">
+          <input id="np-doc" placeholder="000.000.000-00 ou 00.000.000/0001-00" oninput="mascaraCpfCnpj(this);checkCNPJ()" maxlength="18">
         </div>
         <div class="field">
-          <label>Telefone</label>
+          <label>Telefone <span class="req">*</span></label>
           <input id="np-tel" placeholder="(83) 99000-0000" oninput="mascaraTelefone(this)" maxlength="15">
         </div>
         <div class="field span2">
           <label>E-mail</label>
           <input id="np-email" type="email" placeholder="email@exemplo.com">
+        </div>
+      </div>
+
+      <!-- SEÇÃO PROPRIETÁRIO — aparece apenas para CNPJ -->
+      <div id="secao-proprietario" style="display:none">
+        <hr class="divider">
+        <div class="section-label">Responsável Legal / Proprietário</div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:10px">Estes dados são apenas para registro interno — não constam na licença.</div>
+        <div class="grid2">
+          <div class="field span2">
+            <label>Nome do Proprietário</label>
+            <input id="np-prop-nome" placeholder="NOME COMPLETO DO RESPONSÁVEL LEGAL" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+          </div>
+          <div class="field">
+            <label>CPF do Proprietário</label>
+            <input id="np-prop-cpf" placeholder="000.000.000-00" oninput="mascaraCpf(this)" maxlength="14">
+          </div>
+          <div class="field">
+            <label>Contato do Proprietário</label>
+            <input id="np-prop-tel" placeholder="(83) 99000-0000" oninput="mascaraTelefone(this)" maxlength="15">
+          </div>
         </div>
       </div>
 
@@ -1378,12 +1399,12 @@ tbody td {
         </div>
         <div class="field span2">
           <label>Atividade / Empreendimento <span class="req">*</span></label>
-          <input id="np-ativ" placeholder="Ex: Avicultura convencional — 10.000 aves (LAC)">
+          <input id="np-ativ" placeholder="EX: AVICULTURA CONVENCIONAL — 10.000 AVES (LAC)" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
         </div>
 
-        <!-- ENDEREÇO COM CEP -->
+        <!-- ENDEREÇO -->
         <div class="field">
-          <label>CEP</label>
+          <label>CEP <span class="req">*</span></label>
           <div style="display:flex;gap:8px">
             <input id="np-cep" placeholder="00000-000" oninput="mascaraCep(this)" maxlength="9" style="flex:1">
             <button type="button" class="btn btn-ghost" onclick="buscarCep()" style="padding:10px 14px;flex-shrink:0" id="btn-cep">
@@ -1392,38 +1413,36 @@ tbody td {
           </div>
         </div>
         <div class="field">
-          <label>Bairro</label>
-          <input id="np-bairro" placeholder="Bairro">
-        </div>
-        <div class="field span2">
-          <label>Logradouro</label>
-          <input id="np-logradouro" placeholder="Rua, Avenida, etc.">
+          <label>Logradouro <span class="req">*</span></label>
+          <input id="np-logradouro" placeholder="RUA, AVENIDA, ETC." style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
         </div>
         <div class="field">
-          <label>Número</label>
-          <input id="np-numero" placeholder="Nº ou S/N">
+          <label>Bairro <span class="req">*</span></label>
+          <input id="np-bairro" placeholder="BAIRRO" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+        </div>
+          <input id="np-numero" placeholder="Nº OU S/N" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
         </div>
         <div class="field">
           <label>Complemento</label>
-          <input id="np-complemento" placeholder="Sala, Lote, Quadra...">
+          <input id="np-complemento" placeholder="SALA, LOTE, QUADRA..." style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
         </div>
         <div class="field">
           <label>Cidade</label>
-          <input id="np-cidade" placeholder="Serra Redonda" value="Serra Redonda">
+          <input id="np-cidade" placeholder="Serra Redonda" value="Serra Redonda" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
         </div>
         <div class="field">
           <label>UF</label>
-          <input id="np-uf" placeholder="PB" value="PB" maxlength="2">
+          <input id="np-uf" placeholder="PB" value="PB" maxlength="2" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
         </div>
 
         <!-- COORDENADAS GEOGRÁFICAS -->
         <div class="field">
           <label>Latitude</label>
-          <input id="np-lat" placeholder="Ex: 7°11'16&quot;S ou -7.187778">
+          <input id="np-lat" placeholder="Ex: -7.187778 ou 7°11'16&quot;S" onblur="formatarCoordenada(this, true)">
         </div>
         <div class="field">
           <label>Longitude</label>
-          <input id="np-lon" placeholder="Ex: 35°40'41&quot;W ou -35.678056">
+          <input id="np-lon" placeholder="Ex: -35.678056 ou 35°40'41&quot;W" onblur="formatarCoordenada(this, false)">
         </div>
 
         <!-- DOCUMENTAÇÃO -->
@@ -1431,7 +1450,7 @@ tbody td {
           <label>Documentos Recebidos</label>
           <div id="docs-lista" style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px"></div>
           <div style="display:flex;gap:8px">
-            <input id="np-doc-nome" placeholder="Nome do documento (ex: RG, Planta baixa, ART...)" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;color:var(--text);font-family:var(--font-body);font-size:14px;outline:none">
+            <input id="np-doc-nome" placeholder="Nome do documento (ex: RG, Planta baixa, ART...)" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;color:var(--text);font-family:var(--font-body);font-size:14px;outline:none" onkeydown="if(event.key==='Enter'){event.preventDefault();adicionarDoc();}">
             <button type="button" class="btn btn-ghost" onclick="adicionarDoc()" style="flex-shrink:0">+ Adicionar</button>
           </div>
         </div>
@@ -1441,7 +1460,7 @@ tbody td {
           <label>Condicionantes Adicionais</label>
           <div id="cond-lista" style="margin-bottom:8px;display:flex;flex-direction:column;gap:6px"></div>
           <div style="display:flex;gap:8px">
-            <input id="np-cond-texto" placeholder="Digite uma condicionante adicional específica para este processo..." style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;color:var(--text);font-family:var(--font-body);font-size:14px;outline:none">
+            <input id="np-cond-texto" placeholder="Digite uma condicionante adicional específica para este processo..." style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;color:var(--text);font-family:var(--font-body);font-size:14px;outline:none" onkeydown="if(event.key==='Enter'){event.preventDefault();adicionarCondicionante();}">
             <button type="button" class="btn btn-ghost" onclick="adicionarCondicionante()" style="flex-shrink:0">+ Adicionar</button>
           </div>
           <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-top:6px">
@@ -1451,7 +1470,7 @@ tbody td {
 
         <div class="field span2">
           <label>Observações</label>
-          <textarea id="np-obs" placeholder="Informações adicionais..."></textarea>
+          <textarea id="np-obs" placeholder="Informações adicionais..." style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></textarea>
         </div>
       </div>
     </div>
@@ -1558,9 +1577,10 @@ const STATE = {
   user: null,
   processos: [],
   licencas: [],
-  gasUrl: localStorage.getItem('sema_gas_url') || '',
+  gasUrl: localStorage.getItem('sema_gas_url') || 'https://script.google.com/macros/s/AKfycbwz4OVxczTLgaXjr7svcvYRi_6bW_es4Os-3UkzVuBPvY5XeE3kwPAwgxBA_MUHS8FA5A/exec',
   activeId: null,
   page: 1,
+  syncing: false,
 };
 
 const PER_PAGE = 12;
@@ -1608,12 +1628,45 @@ const DEMO_LIC = [
 // AUTH
 // ════════════════════════════════════════════
 
-function doLogin() {
-  const u = document.getElementById('in-user').value.trim();
-  const p = document.getElementById('in-pass').value;
+async function doLogin() {
+  const u   = document.getElementById('in-user').value.trim();
+  const p   = document.getElementById('in-pass').value;
   const err = document.getElementById('login-erro');
-  const usr = USERS.find(x => x.u === u && x.p === p);
-  if (!usr) { err.style.display = 'block'; return; }
+  const btn = document.querySelector('#tela-login .btn-primary');
+
+  if (!u || !p) { err.textContent = 'Preencha usuário e senha.'; err.style.display = 'block'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Verificando...';
+  err.style.display = 'none';
+
+  let usr = null;
+
+  try {
+    if (STATE.gasUrl) {
+      const res = await gasPOST('login', { usuario: u, senha: p });
+      if (res.ok) {
+        usr = { u: res.usuario, name: res.nome, role: res.perfil };
+      }
+    }
+  } catch(e) {
+    console.warn('Login GAS falhou, tentando local:', e);
+  }
+
+  // Fallback para usuários locais
+  if (!usr) {
+    usr = USERS.find(x => x.u === u && x.p === p) || null;
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Entrar';
+
+  if (!usr) {
+    err.textContent = 'Usuário ou senha incorretos.';
+    err.style.display = 'block';
+    return;
+  }
+
   err.style.display = 'none';
   STATE.user = usr;
   document.getElementById('user-name').textContent = usr.name;
@@ -1655,16 +1708,68 @@ function goTo(name, navEl) {
 // DADOS
 // ════════════════════════════════════════════
 
-function loadData() {
+// ════════════════════════════════════════════
+// COMUNICAÇÃO COM GAS
+// ════════════════════════════════════════════
+
+async function gasGET(acao, params = {}) {
+  const url = new URL(STATE.gasUrl);
+  url.searchParams.set('acao', acao);
+  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+  const resp = await fetch(url.toString(), { method: 'GET' });
+  const text = await resp.text();
+  try { return JSON.parse(text); } catch(e) { throw new Error('Resposta inválida do GAS: ' + text.slice(0, 200)); }
+}
+
+async function gasPOST(acao, body = {}) {
+  const resp = await fetch(STATE.gasUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ acao, ...body }),
+  });
+  const text = await resp.text();
+  try { return JSON.parse(text); } catch(e) { throw new Error('Resposta inválida do GAS: ' + text.slice(0, 200)); }
+}
+
+// ════════════════════════════════════════════
+// DADOS
+// ════════════════════════════════════════════
+
+async function loadData() {
   showLoad('Carregando dados...');
-  setTimeout(() => {
-    STATE.processos = [...DEMO];
-    STATE.licencas  = [...DEMO_LIC];
+  try {
+    if (STATE.gasUrl) {
+      const [rProc, rLic] = await Promise.all([
+        gasGET('listarProcessos'),
+        gasGET('listarLicencas'),
+      ]);
+      STATE.processos = rProc.processos || [];
+      STATE.licencas  = rLic.licencas   || [];
+
+      // Normaliza campos que podem vir como string do Sheets
+      STATE.processos.forEach(p => {
+        if (typeof p.docs  === 'string') try { p.docs  = JSON.parse(p.docs);  } catch(e) { p.docs  = []; }
+        if (typeof p.conds === 'string') try { p.conds = JSON.parse(p.conds); } catch(e) { p.conds = []; }
+        if (!Array.isArray(p.hist)) p.hist = [];
+      });
+
+      // Planilha vazia é estado normal — não carrega demo
+      if (STATE.processos.length === 0 && STATE.licencas.length === 0) {
+        toast('Conectado à planilha. Nenhum processo cadastrado ainda.', 'ok');
+      }
+    } else {
+      // Sem URL do GAS configurada — avisa mas não carrega demo
+      toast('URL do GAS não configurada. Acesse Configurações para conectar à planilha.', 'warn');
+    }
+  } catch(err) {
+    console.warn('Erro ao conectar com GAS:', err);
+    toast('Falha ao conectar com a planilha. Verifique a URL do GAS nas Configurações.', 'err');
+  } finally {
     hideLoad();
     renderDash();
     updateBadges();
     document.getElementById('cfg-gas').value = STATE.gasUrl;
-  }, 500);
+  }
 }
 
 function updateBadges() {
@@ -1832,7 +1937,7 @@ function renderLicencas() {
 function openModalNovo() {
   ['np-req','np-doc','np-tel','np-email','np-ativ','np-obs',
    'np-cep','np-logradouro','np-bairro','np-numero','np-complemento',
-   'np-lat','np-lon'].forEach(id => {
+   'np-lat','np-lon','np-prop-nome','np-prop-cpf','np-prop-tel'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -1842,6 +1947,8 @@ function openModalNovo() {
   document.getElementById('np-status').value = 'Aguardando Documentos';
   document.getElementById('docs-lista').innerHTML = '';
   document.getElementById('cond-lista').innerHTML = '';
+  const secProp = document.getElementById('secao-proprietario');
+  if (secProp) secProp.style.display = 'none';
   STATE.docsTemp = [];
   STATE.condTemp = [];
   openModal('m-novo');
@@ -1853,40 +1960,52 @@ function genProtocolo() {
   return `SEMA-${ano}-${seq}`;
 }
 
-function saveProcesso() {
-  const req  = document.getElementById('np-req').value.trim();
+async function saveProcesso() {
+  const req  = document.getElementById('np-req').value.trim().toUpperCase();
   const doc  = document.getElementById('np-doc').value.trim();
   const tipo = document.getElementById('np-tipo').value;
-  const ativ = document.getElementById('np-ativ').value.trim();
+  const ativ = document.getElementById('np-ativ').value.trim().toUpperCase();
+  const tel  = document.getElementById('np-tel').value.trim();
 
-  if (!req || !doc || !tipo || !ativ) { toast('Preencha todos os campos obrigatórios.','err'); return; }
+  if (!req)  { toast('Preencha o Nome / Razão Social.', 'err'); return; }
+  if (!doc)  { toast('Preencha o CPF / CNPJ.', 'err'); return; }
+  if (!tipo) { toast('Selecione a Modalidade de Licença.', 'err'); return; }
+  if (!ativ) { toast('Preencha a Atividade / Empreendimento.', 'err'); return; }
+  if (!tel)  { toast('Preencha o Telefone.', 'err'); return; }
 
-  // Monta endereço composto
-  const logr  = document.getElementById('np-logradouro').value.trim();
-  const num   = document.getElementById('np-numero').value.trim();
-  const comp  = document.getElementById('np-complemento').value.trim();
-  const bairro= document.getElementById('np-bairro').value.trim();
-  const cidade= document.getElementById('np-cidade').value.trim();
-  const uf    = document.getElementById('np-uf').value.trim();
   const cep   = document.getElementById('np-cep').value.trim();
-  const partes = [logr, num, comp, bairro, cidade && uf ? `${cidade}/${uf}` : cidade, cep ? `CEP ${cep}` : ''].filter(Boolean);
+  const logr  = document.getElementById('np-logradouro').value.trim().toUpperCase();
+  const bairro= document.getElementById('np-bairro').value.trim().toUpperCase();
+  const numEnd= document.getElementById('np-numero').value.trim().toUpperCase();
+  const comp  = document.getElementById('np-complemento').value.trim().toUpperCase();
+  const cidade= document.getElementById('np-cidade').value.trim().toUpperCase();
+  const uf    = document.getElementById('np-uf').value.trim().toUpperCase();
+
+  if (!logr)   { toast('Preencha o Logradouro.', 'err'); return; }
+  if (!bairro) { toast('Preencha o Bairro.', 'err'); return; }
+  if (!numEnd) { toast('Preencha o Número do endereço.', 'err'); return; }
+
+  const partes = [logr, numEnd, comp, bairro, cidade && uf ? `${cidade}/${uf}` : cidade, cep ? `CEP ${cep}` : ''].filter(Boolean);
   const endFull = partes.join(', ');
 
+  const hoje = new Date().toISOString().split('T')[0];
   const np = {
-    id:   genProtocolo(),
-    req, doc,
-    tel:    document.getElementById('np-tel').value.trim(),
-    email:  document.getElementById('np-email').value.trim(),
+    id:    genProtocolo(),
+    req, doc, tel,
+    email: document.getElementById('np-email').value.trim(),
     tipo, ativ,
-    end:    endFull,
-    lat:    document.getElementById('np-lat').value.trim(),
-    lon:    document.getElementById('np-lon').value.trim(),
-    docs:   STATE.docsTemp || [],
-    conds:  STATE.condTemp || [],
+    end:   endFull,
+    lat:   document.getElementById('np-lat').value.trim(),
+    lon:   document.getElementById('np-lon').value.trim(),
+    docs:  STATE.docsTemp  || [],
+    conds: STATE.condTemp  || [],
     status: document.getElementById('np-status').value,
-    data:   new Date().toISOString().split('T')[0],
-    obs:    document.getElementById('np-obs').value.trim(),
-    hist:   [{ d: new Date().toISOString().split('T')[0], t: `Processo aberto por ${STATE.user.name}.` }]
+    data:  hoje,
+    obs:   document.getElementById('np-obs').value.trim().toUpperCase(),
+    proprietario_nome:    (document.getElementById('np-prop-nome')?.value || '').trim().toUpperCase(),
+    proprietario_cpf:     (document.getElementById('np-prop-cpf')?.value  || '').trim(),
+    proprietario_contato: (document.getElementById('np-prop-tel')?.value  || '').trim(),
+    hist:  [{ d: hoje, t: `Processo aberto por ${STATE.user.name}.` }]
   };
 
   STATE.processos.unshift(np);
@@ -1895,7 +2014,15 @@ function saveProcesso() {
   updateBadges();
   toast(`Processo ${np.id} aberto!`, 'ok');
 
-  if (STATE.gasUrl) callGAS('novoProcesso', np);
+  if (STATE.gasUrl) {
+    try {
+      await gasPOST('salvarProcesso', { dados: np });
+      await gasPOST('salvarHistorico', { proto: np.id, data: hoje, texto: `Processo aberto por ${STATE.user.name}.` });
+    } catch(e) {
+      console.warn('Falha ao sincronizar processo com GAS:', e);
+      toast('Processo salvo localmente — sincronização pendente', 'warn');
+    }
+  }
 }
 
 // ════════════════════════════════════════════
@@ -1919,29 +2046,53 @@ function openDetalhe(id) {
     LVPE: 'Licença Veicular de Publicidade/Eventos', AA: 'Autorização Ambiental',
   };
 
+  const docsList = (p.docs || []).map(d =>
+    `<span style="display:inline-block;background:var(--accent-bg);border:1px solid var(--accent-border);color:var(--accent);padding:2px 8px;border-radius:99px;font-size:11px;font-family:var(--font-mono);margin:2px">${d}</span>`
+  ).join('');
+
   document.getElementById('det-body').innerHTML = `
     <div class="section-label">Requerente</div>
     <div class="detail-row"><span class="detail-key">Nome/Razão Social</span><span class="detail-val" style="font-weight:500">${p.req}</span></div>
     <div class="detail-row"><span class="detail-key">CPF/CNPJ</span><span class="detail-val" style="font-family:var(--font-mono);font-size:12px">${p.doc}</span></div>
     ${p.tel   ? `<div class="detail-row"><span class="detail-key">Telefone</span><span class="detail-val">${p.tel}</span></div>` : ''}
     ${p.email ? `<div class="detail-row"><span class="detail-key">E-mail</span><span class="detail-val">${p.email}</span></div>` : ''}
+    ${p.proprietario_nome ? `
+    <hr class="divider">
+    <div class="section-label">Responsável Legal</div>
+    <div class="detail-row"><span class="detail-key">Nome</span><span class="detail-val">${p.proprietario_nome}</span></div>
+    ${p.proprietario_cpf  ? `<div class="detail-row"><span class="detail-key">CPF</span><span class="detail-val" style="font-family:var(--font-mono);font-size:12px">${p.proprietario_cpf}</span></div>` : ''}
+    ${p.proprietario_contato ? `<div class="detail-row"><span class="detail-key">Contato</span><span class="detail-val">${p.proprietario_contato}</span></div>` : ''}
+    ` : ''}
 
     <hr class="divider">
     <div class="section-label">Empreendimento</div>
     <div class="detail-row"><span class="detail-key">Modalidade</span><span class="detail-val">${chipTipo(p.tipo)} <span style="color:var(--text3);font-size:12px;margin-left:6px">${MODAL_LABELS[p.tipo]||''}</span></span></div>
     <div class="detail-row"><span class="detail-key">Atividade</span><span class="detail-val">${p.ativ}</span></div>
     ${p.end ? `<div class="detail-row"><span class="detail-key">Endereço</span><span class="detail-val">${p.end}</span></div>` : ''}
+    ${(p.lat || p.lon) ? `<div class="detail-row"><span class="detail-key">Coordenadas</span><span class="detail-val" style="font-family:var(--font-mono);font-size:12px">${p.lat ? `Lat: ${p.lat}` : ''}${p.lat && p.lon ? ' &nbsp; ' : ''}${p.lon ? `Lon: ${p.lon}` : ''}</span></div>` : ''}
     <div class="detail-row"><span class="detail-key">Abertura</span><span class="detail-val" style="font-family:var(--font-mono);font-size:12px">${fmtDate(p.data)}</span></div>
     <div class="detail-row"><span class="detail-key">Status Atual</span><span class="detail-val">${statusPill(p.status)}</span></div>
     ${p.obs ? `<div class="detail-row"><span class="detail-key">Observações</span><span class="detail-val" style="color:var(--text2)">${p.obs}</span></div>` : ''}
-    ${p.docs && p.docs.length ? `<div class="detail-row"><span class="detail-key">Documentos</span><span class="detail-val">${p.docs.map(d => `<span style="display:inline-block;background:var(--accent-bg);border:1px solid var(--accent-border);color:var(--accent);padding:2px 8px;border-radius:99px;font-size:11px;font-family:var(--font-mono);margin:2px">${d}</span>`).join('')}</span></div>` : ''}
-    ${(p.lat || p.lon) ? `<div class="detail-row"><span class="detail-key">Coordenadas</span><span class="detail-val" style="font-family:var(--font-mono);font-size:12px">${p.lat ? `Lat: ${p.lat}` : ''}${p.lat && p.lon ? ' &nbsp; ' : ''}${p.lon ? `Lon: ${p.lon}` : ''}</span></div>` : ''}
     ${p.conds && p.conds.length ? `<div class="detail-row"><span class="detail-key">Cond. Adicionais</span><span class="detail-val"><ol start="8" style="font-size:12px;color:var(--text2);padding-left:16px;margin:0">${p.conds.map(c => `<li style="margin-bottom:3px">${c}</li>`).join('')}</ol></span></div>` : ''}
+
+    <hr class="divider">
+    <div class="section-label" style="display:flex;align-items:center;justify-content:space-between">
+      <span>Documentos Recebidos</span>
+    </div>
+    <div id="det-docs-lista" style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:6px;min-height:24px">
+      ${docsList || '<span style="font-size:12px;color:var(--text3)">Nenhum documento registrado.</span>'}
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:4px">
+      <input id="det-doc-input" placeholder="Nome do documento (ex: ART, Planta baixa, Certidão...)"
+        style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:9px 12px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();adicionarDocProcesso();}">
+      <button class="btn btn-ghost" onclick="adicionarDocProcesso()" style="flex-shrink:0">+ Adicionar</button>
+    </div>
 
     <hr class="divider">
     <div class="section-label">Histórico de Tramitação</div>
     <ul class="timeline">
-      ${(p.hist||[]).map(h => `
+      ${(p.hist||[]).slice().reverse().map(h => `
         <li class="tl-item">
           <div class="tl-date">${fmtDate(h.d)}</div>
           <div class="tl-text">${h.t}</div>
@@ -1951,9 +2102,16 @@ function openDetalhe(id) {
   `;
 
   document.getElementById('det-footer').innerHTML = `
+    <button class="btn btn-ghost" onclick="exportarHistorico('${p.id}')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Exportar Histórico
+    </button>
     <button class="btn btn-ghost" onclick="closeModal('m-detalhe')">Fechar</button>
     <button class="btn btn-amber" onclick="closeModal('m-detalhe');openStatus('${p.id}')">Atualizar Status</button>
-    ${p.status === 'Aprovado' ? `<button class="btn btn-primary" onclick="emitirLicenca('${p.id}')">Emitir Licença</button>` : ''}
+    ${p.status === 'Aprovado' ? `<button class="btn btn-primary" onclick="emitirLicenca('${p.id}')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+      Emitir Licença
+    </button>` : ''}
   `;
 
   openModal('m-detalhe');
@@ -1972,18 +2130,18 @@ function openStatus(id) {
   openModal('m-status');
 }
 
-function confirmStatus() {
+async function confirmStatus() {
   const novoStatus = document.getElementById('st-novo').value;
   const obs        = document.getElementById('st-obs').value.trim();
   const p = STATE.processos.find(x => x.id === STATE.activeId);
   if (!p) return;
 
+  const hoje = new Date().toISOString().split('T')[0];
+  const textoHist = `Status alterado para "${novoStatus}"${obs ? ': ' + obs : ''} (${STATE.user.name})`;
+
   p.status = novoStatus;
   p.hist = p.hist || [];
-  p.hist.push({
-    d: new Date().toISOString().split('T')[0],
-    t: `Status → "${novoStatus}"${obs ? ': ' + obs : ''} (${STATE.user.name})`
-  });
+  p.hist.push({ d: hoje, t: textoHist });
 
   closeModal('m-status');
   renderDash();
@@ -1991,23 +2149,39 @@ function confirmStatus() {
   if (document.getElementById('screen-processos').classList.contains('active')) renderProcessos();
   toast(`Status atualizado para "${novoStatus}"`, 'ok');
 
-  if (STATE.gasUrl) sendGAS('atualizarStatus', { id: STATE.activeId, status: novoStatus, obs });
+  if (STATE.gasUrl) {
+    try {
+      await gasPOST('salvarProcesso', { dados: p });
+      await gasPOST('salvarHistorico', { proto: p.id, data: hoje, texto: textoHist });
+    } catch(e) { console.warn('Falha ao sincronizar status com GAS:', e); }
+  }
 }
 
 // ════════════════════════════════════════════
 // EMITIR LICENÇA
 // ════════════════════════════════════════════
 
-function emitirLicenca(id) {
+async function emitirLicenca(id) {
   const p = STATE.processos.find(x => x.id === id);
   if (!p) return;
 
-  const cnts = JSON.parse(localStorage.getItem('sema_cnt') || '{}');
-  cnts[p.tipo] = (cnts[p.tipo] || 0) + 1;
-  localStorage.setItem('sema_cnt', JSON.stringify(cnts));
+  // Busca próximo número do GAS (ou usa localStorage como fallback)
+  let proximoNum = null;
+  if (STATE.gasUrl) {
+    try {
+      const res = await gasGET('proximoNumero', { tipo: p.tipo });
+      proximoNum = res.num;
+    } catch(e) { console.warn('Falha ao buscar contador do GAS:', e); }
+  }
+  if (!proximoNum) {
+    const cnts = JSON.parse(localStorage.getItem('sema_cnt') || '{}');
+    cnts[p.tipo] = (cnts[p.tipo] || 0) + 1;
+    localStorage.setItem('sema_cnt', JSON.stringify(cnts));
+    proximoNum = cnts[p.tipo];
+  }
 
-  const prefixes = { Dispensa: 'DISP', LAC:'LAC', LS:'LS', LP:'LP', LI:'LI', LO:'LO', LAI:'LAI', LAO:'LAO', LIO:'LIO', LRO:'LRO', LVPE:'LVPE', AA:'AA' };
-  const num = `${prefixes[p.tipo]||p.tipo}-${new Date().getFullYear()}-${String(cnts[p.tipo]).padStart(3,'0')}`;
+  const prefixes = { Dispensa:'DISP', LAC:'LAC', LS:'LS', LP:'LP', LI:'LI', LO:'LO', LAI:'LAI', LAO:'LAO', LIO:'LIO', LRO:'LRO', LVPE:'LVPE', AA:'AA' };
+  const num     = `${prefixes[p.tipo]||p.tipo}-${new Date().getFullYear()}-${String(proximoNum).padStart(3,'0')}`;
   const emissao = new Date().toISOString().split('T')[0];
 
   const valDias = VALIDADES[p.tipo] || 365;
@@ -2015,7 +2189,8 @@ function emitirLicenca(id) {
   valDate.setDate(valDate.getDate() + valDias);
   const validade = valDate.toISOString().split('T')[0];
 
-  STATE.licencas.push({ num, proto: p.id, req: p.req, tipo: p.tipo, emissao, validade });
+  const licenca = { num, proto: p.id, req: p.req, tipo: p.tipo, emissao, validade };
+  STATE.licencas.push(licenca);
   p.status = 'Emitido';
   p.hist.push({ d: emissao, t: `Licença emitida: ${num}` });
 
@@ -2023,6 +2198,14 @@ function emitirLicenca(id) {
   renderDash();
   updateBadges();
   toast(`Licença ${num} emitida com sucesso!`, 'ok');
+
+  if (STATE.gasUrl) {
+    try {
+      await gasPOST('salvarLicenca', { dados: licenca });
+      await gasPOST('salvarProcesso', { dados: p });
+      await gasPOST('salvarHistorico', { proto: p.id, data: emissao, texto: `Licenca emitida: ${num}` });
+    } catch(e) { console.warn('Falha ao sincronizar licença com GAS:', e); }
+  }
 }
 
 // ════════════════════════════════════════════
@@ -2034,21 +2217,6 @@ function saveConfig() {
   STATE.gasUrl = url;
   localStorage.setItem('sema_gas_url', url);
   toast('URL do GAS salva!', 'ok');
-}
-
-// ════════════════════════════════════════════
-// GAS (placeholder)
-// ════════════════════════════════════════════
-
-async function sendGAS(acao, dados) {
-  if (!STATE.gasUrl) return;
-  try {
-    await fetch(STATE.gasUrl, {
-      method: 'POST', mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ acao, dados })
-    });
-  } catch(e) { console.warn('GAS indisponível:', e); }
 }
 
 // ════════════════════════════════════════════
@@ -2155,8 +2323,166 @@ async function buscarCep() {
 }
 
 // ════════════════════════════════════════════
-// VISUALIZAR LICENÇA (modal prévia HTML)
+// CNPJ — seção proprietário
 // ════════════════════════════════════════════
+
+function checkCNPJ() {
+  const val = document.getElementById('np-doc').value.replace(/\D/g, '');
+  const secao = document.getElementById('secao-proprietario');
+  if (secao) secao.style.display = val.length === 14 ? 'block' : 'none';
+}
+
+function mascaraCpf(el) {
+  let v = el.value.replace(/\D/g, '').slice(0, 11);
+  if (v.length > 9) v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, '$1.$2.$3-$4');
+  else if (v.length > 6) v = v.replace(/(\d{3})(\d{3})(\d{0,3})/, '$1.$2.$3');
+  else if (v.length > 3) v = v.replace(/(\d{3})(\d{0,3})/, '$1.$2');
+  el.value = v;
+}
+
+// ════════════════════════════════════════════
+// COORDENADAS — conversão decimal → GMS
+// ════════════════════════════════════════════
+
+function decimalToGMS(valor, isLat) {
+  const abs = Math.abs(valor);
+  const graus = Math.floor(abs);
+  const minDecimal = (abs - graus) * 60;
+  const min = Math.floor(minDecimal);
+  const seg = Math.round((minDecimal - min) * 60);
+  const dir = isLat ? (valor < 0 ? 'S' : 'N') : (valor < 0 ? 'W' : 'E');
+  return `${graus}°${String(min).padStart(2,'0')}'${String(seg).padStart(2,'0')}"${dir}`;
+}
+
+function formatarCoordenada(input, isLat) {
+  const val = input.value.trim();
+  if (!val) return;
+  // Se já está no formato GMS, mantém
+  if (/\d+°\d+'[\d"]/.test(val)) return;
+  // Tenta converter decimal
+  const num = parseFloat(val.replace(',', '.'));
+  if (!isNaN(num)) {
+    input.value = decimalToGMS(num, isLat);
+  }
+}
+
+// ════════════════════════════════════════════
+// ADICIONAR DOCUMENTOS EM PROCESSO EXISTENTE
+// ════════════════════════════════════════════
+
+async function adicionarDocProcesso() {
+  const input = document.getElementById('det-doc-input');
+  const nome  = input.value.trim().toUpperCase();
+  if (!nome) return;
+
+  const p = STATE.processos.find(x => x.id === STATE.activeId);
+  if (!p) return;
+
+  if (!Array.isArray(p.docs)) p.docs = [];
+  p.docs.push(nome);
+  input.value = '';
+
+  // Atualiza lista visual
+  const lista = document.getElementById('det-docs-lista');
+  if (lista) {
+    lista.innerHTML = p.docs.map(d =>
+      `<span style="display:inline-block;background:var(--accent-bg);border:1px solid var(--accent-border);color:var(--accent);padding:2px 8px;border-radius:99px;font-size:11px;font-family:var(--font-mono);margin:2px">${d}</span>`
+    ).join('');
+  }
+
+  toast(`Documento "${nome}" adicionado!`, 'ok');
+
+  // Sincroniza com GAS em background
+  if (STATE.gasUrl) {
+    try {
+      await gasPOST('salvarProcesso', { dados: p });
+    } catch(e) { console.warn('Falha ao sincronizar documentos:', e); }
+  }
+}
+
+// ════════════════════════════════════════════
+// EXPORTAR HISTÓRICO DO PROCESSO
+// ════════════════════════════════════════════
+
+async function exportarHistorico(id) {
+  const p = STATE.processos.find(x => x.id === id);
+  if (!p) return;
+
+  if (!window.jspdf) {
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      s.onload = resolve; s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const W = 210, ML = 18, MR = 18;
+  let y = 18;
+
+  // Brasão
+  const brasaoEl = document.getElementById('brasao-oficial');
+  if (brasaoEl) {
+    try {
+      const img = new Image();
+      img.src = brasaoEl.src;
+      await new Promise(r => { img.onload = r; img.onerror = r; });
+      const cv = document.createElement('canvas');
+      cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+      cv.getContext('2d').drawImage(img, 0, 0);
+      doc.addImage(cv.toDataURL('image/png'), 'PNG', ML, y, 18, 18);
+    } catch(e) {}
+  }
+
+  // Cabeçalho
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(20,20,20);
+  doc.text('SECRETARIA MUNICIPAL DE MEIO AMBIENTE - SERRA REDONDA/PB', W/2, y + 4, { align: 'center' });
+  doc.text('HISTORICO DE TRAMITACAO', W/2, y + 10, { align: 'center' });
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(60,60,60);
+  doc.text(`Processo No ${p.id}  |  Requerente: ${p.req}  |  Modalidade: ${p.tipo}  |  Status: ${p.status}`, W/2, y + 16, { align: 'center' });
+
+  y += 24;
+  doc.setDrawColor(20,20,20); doc.setLineWidth(0.6);
+  doc.line(ML, y, W - MR, y);
+  y += 6;
+
+  // Cabeçalho da tabela
+  doc.setFillColor(230,230,230);
+  doc.rect(ML, y, W - ML - MR, 7, 'F');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(20,20,20);
+  doc.text('DATA', ML + 3, y + 5);
+  doc.text('EVENTO', ML + 32, y + 5);
+  y += 7;
+
+  // Linhas do histórico (ordenado por data crescente)
+  const hist = [...(p.hist || [])].sort((a, b) => a.d.localeCompare(b.d));
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(30,30,30);
+  doc.setLineWidth(0.2); doc.setDrawColor(180,180,180);
+
+  hist.forEach((h, i) => {
+    const textoLines = doc.splitTextToSize(h.t, W - ML - MR - 32);
+    const rowH = Math.max(textoLines.length * 4.5 + 3, 8);
+    if (y + rowH > 270) { doc.addPage(); y = 18; }
+    if (i % 2 === 0) { doc.setFillColor(248,248,248); doc.rect(ML, y, W - ML - MR, rowH, 'F'); }
+    doc.text(fmtDate(h.d), ML + 3, y + rowH/2 + 1.5);
+    doc.text(textoLines, ML + 32, y + rowH/2 - (textoLines.length - 1) * 2.2 + 1.5);
+    doc.line(ML, y + rowH, W - MR, y + rowH);
+    y += rowH;
+  });
+
+  // Rodapé
+  const hoje = new Date();
+  const dataHoje = `${String(hoje.getDate()).padStart(2,'0')}/${String(hoje.getMonth()+1).padStart(2,'0')}/${hoje.getFullYear()}`;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(120,120,120);
+  doc.text(`Emitido em ${dataHoje}  |  SEMMA Serra Redonda/PB  |  ${hist.length} registro(s)`, W/2, 285, { align: 'center' });
+
+  doc.save(`Historico-${p.id}.pdf`);
+  toast('Histórico exportado com sucesso!', 'ok');
+}
+
+
 
 let STATE_PREV_LICENCA = null; // guarda licença atual para imprimir depois
 
