@@ -1320,38 +1320,16 @@ tbody td {
       <div class="grid2">
         <div class="field span2">
           <label>Nome / Razão Social <span class="req">*</span></label>
-          <input id="np-req" placeholder="Nome completo ou razão social" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+          <input id="np-req" placeholder="Nome completo ou razão social">
         </div>
         <div class="field">
           <label>CPF / CNPJ <span class="req">*</span></label>
-          <input id="np-doc" placeholder="000.000.000-00 ou 00.000.000/0001-00" oninput="mascaraCpfCnpj(this);verificarCnpj()" maxlength="18">
+          <input id="np-doc" placeholder="000.000.000-00 ou 00.000.000/0001-00" oninput="mascaraCpfCnpj(this)" maxlength="18">
         </div>
         <div class="field">
           <label>Telefone</label>
           <input id="np-tel" placeholder="(83) 99000-0000" oninput="mascaraTelefone(this)" maxlength="15">
         </div>
-
-        <!-- SEÇÃO PROPRIETÁRIO — visível apenas quando CNPJ (14 dígitos) -->
-        <div id="secao-proprietario" class="span2" style="display:none">
-          <hr class="divider" style="margin:4px 0 12px">
-          <div class="section-label" style="margin-bottom:10px">Proprietário / Responsável Legal</div>
-          <div class="grid2">
-            <div class="field span2">
-              <label>Nome do Proprietário</label>
-              <input id="np-prop-nome" placeholder="Nome completo" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
-            </div>
-            <div class="field">
-              <label>CPF do Proprietário</label>
-              <input id="np-prop-cpf" placeholder="000.000.000-00" oninput="mascaraSoCpf(this)" maxlength="14">
-            </div>
-            <div class="field">
-              <label>Contato do Proprietário</label>
-              <input id="np-prop-contato" placeholder="(83) 99000-0000" oninput="mascaraTelefone(this)" maxlength="15">
-            </div>
-          </div>
-          <hr class="divider" style="margin:12px 0 4px">
-        </div>
-
         <div class="field span2">
           <label>E-mail</label>
           <input id="np-email" type="email" placeholder="email@exemplo.com">
@@ -1400,7 +1378,7 @@ tbody td {
         </div>
         <div class="field span2">
           <label>Atividade / Empreendimento <span class="req">*</span></label>
-          <input id="np-ativ" placeholder="Ex: Avicultura convencional — 10.000 aves (LAC)" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+          <input id="np-ativ" placeholder="Ex: Avicultura convencional — 10.000 aves (LAC)">
         </div>
 
         <!-- ENDEREÇO COM CEP -->
@@ -1413,25 +1391,25 @@ tbody td {
             </button>
           </div>
         </div>
-        <div class="field span2">
-          <label>Logradouro</label>
-          <input id="np-logradouro" placeholder="Rua, Avenida, etc." style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
-        </div>
         <div class="field">
           <label>Bairro</label>
-          <input id="np-bairro" placeholder="Bairro" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+          <input id="np-bairro" placeholder="Bairro">
+        </div>
+        <div class="field span2">
+          <label>Logradouro</label>
+          <input id="np-logradouro" placeholder="Rua, Avenida, etc.">
         </div>
         <div class="field">
           <label>Número</label>
-          <input id="np-numero" placeholder="Nº ou S/N" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+          <input id="np-numero" placeholder="Nº ou S/N">
         </div>
         <div class="field">
           <label>Complemento</label>
-          <input id="np-complemento" placeholder="Sala, Lote, Quadra..." style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+          <input id="np-complemento" placeholder="Sala, Lote, Quadra...">
         </div>
         <div class="field">
           <label>Cidade</label>
-          <input id="np-cidade" placeholder="Serra Redonda" value="Serra Redonda" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+          <input id="np-cidade" placeholder="Serra Redonda" value="Serra Redonda">
         </div>
         <div class="field">
           <label>UF</label>
@@ -1441,11 +1419,11 @@ tbody td {
         <!-- COORDENADAS GEOGRÁFICAS -->
         <div class="field">
           <label>Latitude</label>
-          <input id="np-lat" placeholder="Ex: 7°11'16&quot;S ou -7.187778" onblur="formatarCoordenada(this,'lat')">
+          <input id="np-lat" placeholder="Ex: 7°11'16&quot;S ou -7.187778">
         </div>
         <div class="field">
           <label>Longitude</label>
-          <input id="np-lon" placeholder="Ex: 35°40'41&quot;W ou -35.678056" onblur="formatarCoordenada(this,'lon')">
+          <input id="np-lon" placeholder="Ex: 35°40'41&quot;W ou -35.678056">
         </div>
 
         <!-- DOCUMENTAÇÃO -->
@@ -1473,7 +1451,7 @@ tbody td {
 
         <div class="field span2">
           <label>Observações</label>
-          <textarea id="np-obs" placeholder="Informações adicionais..." style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></textarea>
+          <textarea id="np-obs" placeholder="Informações adicionais..."></textarea>
         </div>
       </div>
     </div>
@@ -1742,7 +1720,6 @@ async function loadData() {
   showLoad('Carregando dados...');
   try {
     if (STATE.gasUrl) {
-      // Carrega do GAS em paralelo
       const [rProc, rLic] = await Promise.all([
         gasGET('listarProcessos'),
         gasGET('listarLicencas'),
@@ -1757,22 +1734,17 @@ async function loadData() {
         if (!Array.isArray(p.hist)) p.hist = [];
       });
 
-      // Se não houver dados reais ainda, carrega demo para não aparecer vazio
+      // Planilha vazia é estado normal — não carrega demo
       if (STATE.processos.length === 0 && STATE.licencas.length === 0) {
-        STATE.processos = [...DEMO];
-        STATE.licencas  = [...DEMO_LIC];
-        toast('Planilha vazia — exibindo dados de demonstração', 'warn');
+        toast('Conectado à planilha. Nenhum processo cadastrado ainda.', 'ok');
       }
     } else {
-      // Sem URL configurada — usa demo
-      STATE.processos = [...DEMO];
-      STATE.licencas  = [...DEMO_LIC];
+      // Sem URL do GAS configurada — avisa mas não carrega demo
+      toast('URL do GAS não configurada. Acesse Configurações para conectar à planilha.', 'warn');
     }
   } catch(err) {
-    console.warn('GAS indisponível, usando demo:', err);
-    STATE.processos = [...DEMO];
-    STATE.licencas  = [...DEMO_LIC];
-    toast('Falha ao conectar com a planilha — usando dados locais', 'warn');
+    console.warn('Erro ao conectar com GAS:', err);
+    toast('Falha ao conectar com a planilha. Verifique a URL do GAS nas Configurações.', 'err');
   } finally {
     hideLoad();
     renderDash();
@@ -1946,8 +1918,7 @@ function renderLicencas() {
 function openModalNovo() {
   ['np-req','np-doc','np-tel','np-email','np-ativ','np-obs',
    'np-cep','np-logradouro','np-bairro','np-numero','np-complemento',
-   'np-lat','np-lon',
-   'np-prop-nome','np-prop-cpf','np-prop-contato'].forEach(id => {
+   'np-lat','np-lon'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -1957,7 +1928,6 @@ function openModalNovo() {
   document.getElementById('np-status').value = 'Aguardando Documentos';
   document.getElementById('docs-lista').innerHTML = '';
   document.getElementById('cond-lista').innerHTML = '';
-  document.getElementById('secao-proprietario').style.display = 'none';
   STATE.docsTemp = [];
   STATE.condTemp = [];
   openModal('m-novo');
@@ -1970,19 +1940,19 @@ function genProtocolo() {
 }
 
 async function saveProcesso() {
-  const req  = document.getElementById('np-req').value.trim().toUpperCase();
+  const req  = document.getElementById('np-req').value.trim();
   const doc  = document.getElementById('np-doc').value.trim();
   const tipo = document.getElementById('np-tipo').value;
-  const ativ = document.getElementById('np-ativ').value.trim().toUpperCase();
+  const ativ = document.getElementById('np-ativ').value.trim();
 
   if (!req || !doc || !tipo || !ativ) { toast('Preencha todos os campos obrigatórios.','err'); return; }
 
-  const logr  = document.getElementById('np-logradouro').value.trim().toUpperCase();
-  const num   = document.getElementById('np-numero').value.trim().toUpperCase();
-  const comp  = document.getElementById('np-complemento').value.trim().toUpperCase();
-  const bairro= document.getElementById('np-bairro').value.trim().toUpperCase();
-  const cidade= document.getElementById('np-cidade').value.trim().toUpperCase();
-  const uf    = document.getElementById('np-uf').value.trim().toUpperCase();
+  const logr  = document.getElementById('np-logradouro').value.trim();
+  const num   = document.getElementById('np-numero').value.trim();
+  const comp  = document.getElementById('np-complemento').value.trim();
+  const bairro= document.getElementById('np-bairro').value.trim();
+  const cidade= document.getElementById('np-cidade').value.trim();
+  const uf    = document.getElementById('np-uf').value.trim();
   const cep   = document.getElementById('np-cep').value.trim();
   const partes = [logr, num, comp, bairro, cidade && uf ? `${cidade}/${uf}` : cidade, cep ? `CEP ${cep}` : ''].filter(Boolean);
   const endFull = partes.join(', ');
@@ -2001,10 +1971,7 @@ async function saveProcesso() {
     conds: STATE.condTemp  || [],
     status: document.getElementById('np-status').value,
     data:  hoje,
-    obs:   document.getElementById('np-obs').value.trim().toUpperCase(),
-    proprietario_nome:    isCNPJ(doc) ? document.getElementById('np-prop-nome').value.trim().toUpperCase()    : '',
-    proprietario_cpf:     isCNPJ(doc) ? document.getElementById('np-prop-cpf').value.trim()                  : '',
-    proprietario_contato: isCNPJ(doc) ? document.getElementById('np-prop-contato').value.trim()              : '',
+    obs:   document.getElementById('np-obs').value.trim(),
     hist:  [{ d: hoje, t: `Processo aberto por ${STATE.user.name}.` }]
   };
 
@@ -2077,24 +2044,10 @@ function openDetalhe(id) {
         </li>
       `).join('')}
     </ul>
-
-    <hr class="divider">
-    <div class="section-label">Adicionar Documentos</div>
-    <div id="det-docs-lista" style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px">
-      ${(p.docs||[]).map((d,i) => `<span style="display:inline-flex;align-items:center;gap:6px;background:var(--accent-bg);border:1px solid var(--accent-border);color:var(--accent);padding:4px 10px;border-radius:99px;font-size:12px;font-family:var(--font-mono)">${d}<button onclick="removerDocProcesso('${p.id}',${i})" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:14px;line-height:1;padding:0;opacity:0.7">×</button></span>`).join('')}
-    </div>
-    <div style="display:flex;gap:8px">
-      <input id="det-doc-input" placeholder="Nome do documento..." style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;color:var(--text);font-family:var(--font-body);font-size:14px;outline:none">
-      <button type="button" class="btn btn-ghost" onclick="addDocToProcess('${p.id}')" style="flex-shrink:0">+ Adicionar</button>
-    </div>
   `;
 
   document.getElementById('det-footer').innerHTML = `
     <button class="btn btn-ghost" onclick="closeModal('m-detalhe')">Fechar</button>
-    <button class="btn btn-ghost" onclick="exportarHistorico('${p.id}')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      Exportar Histórico
-    </button>
     <button class="btn btn-amber" onclick="closeModal('m-detalhe');openStatus('${p.id}')">Atualizar Status</button>
     ${p.status === 'Aprovado' ? `<button class="btn btn-primary" onclick="emitirLicenca('${p.id}')">Emitir Licença</button>` : ''}
   `;
@@ -2133,8 +2086,6 @@ async function confirmStatus() {
   updateBadges();
   if (document.getElementById('screen-processos').classList.contains('active')) renderProcessos();
   toast(`Status atualizado para "${novoStatus}"`, 'ok');
-  // Reabre o detalhe para refletir novo status (incluindo botão Emitir Licença se Aprovado)
-  openDetalhe(STATE.activeId);
 
   if (STATE.gasUrl) {
     try {
@@ -2183,10 +2134,8 @@ async function emitirLicenca(id) {
 
   closeModal('m-detalhe');
   renderDash();
-  renderLicencas();
   updateBadges();
   toast(`Licença ${num} emitida com sucesso!`, 'ok');
-  goTo('licencas', document.querySelector('[onclick*="licencas"]'));
 
   if (STATE.gasUrl) {
     try {
@@ -2254,224 +2203,8 @@ function toast(msg, type = 'ok') {
 }
 
 // ════════════════════════════════════════════
-// COORDENADAS — conversão decimal ↔ GMS
-// ════════════════════════════════════════════
-
-function decimalToGMS(valor, isLat) {
-  const abs = Math.abs(valor);
-  const graus = Math.floor(abs);
-  const minDecimal = (abs - graus) * 60;
-  const min = Math.floor(minDecimal);
-  const seg = Math.round((minDecimal - min) * 60);
-  const dir = isLat ? (valor < 0 ? 'S' : 'N') : (valor < 0 ? 'W' : 'E');
-  return graus + String.fromCharCode(176) + min + "'" + seg + '"' + dir;
-}
-
-function formatarCoordenada(el, tipo) {
-  const raw = el.value.trim();
-  if (!raw) return;
-  // Já está em GMS — não altera
-  if (/[°'"NSWE]/i.test(raw)) return;
-  const num = parseFloat(raw.replace(',', '.'));
-  if (isNaN(num)) return;
-  el.value = decimalToGMS(num, tipo === 'lat');
-}
-
-// ════════════════════════════════════════════
-// CNPJ / PROPRIETÁRIO
-// ════════════════════════════════════════════
-
-function isCNPJ(valor) {
-  return valor.replace(/\D/g, '').length === 14;
-}
-
-function verificarCnpj() {
-  const doc = document.getElementById('np-doc').value;
-  const secao = document.getElementById('secao-proprietario');
-  secao.style.display = isCNPJ(doc) ? 'block' : 'none';
-}
-
-// ════════════════════════════════════════════
-// DOCUMENTOS EM PROCESSOS EXISTENTES
-// ════════════════════════════════════════════
-
-async function addDocToProcess(id) {
-  const input = document.getElementById('det-doc-input');
-  const nome  = input.value.trim();
-  if (!nome) return;
-  const p = STATE.processos.find(x => x.id === id);
-  if (!p) return;
-  if (!Array.isArray(p.docs)) p.docs = [];
-  p.docs.push(nome);
-  input.value = '';
-  // Atualiza a lista na tela
-  const lista = document.getElementById('det-docs-lista');
-  lista.innerHTML = (p.docs || []).map((d,i) => `<span style="display:inline-flex;align-items:center;gap:6px;background:var(--accent-bg);border:1px solid var(--accent-border);color:var(--accent);padding:4px 10px;border-radius:99px;font-size:12px;font-family:var(--font-mono)">${d}<button onclick="removerDocProcesso('${id}',${i})" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:14px;line-height:1;padding:0;opacity:0.7">×</button></span>`).join('');
-  if (STATE.gasUrl) {
-    try { await gasPOST('salvarProcesso', { dados: p }); } catch(e) { console.warn('Falha ao salvar doc no GAS:', e); }
-  }
-  toast('Documento adicionado!', 'ok');
-}
-
-async function removerDocProcesso(id, idx) {
-  const p = STATE.processos.find(x => x.id === id);
-  if (!p || !Array.isArray(p.docs)) return;
-  p.docs.splice(idx, 1);
-  const lista = document.getElementById('det-docs-lista');
-  lista.innerHTML = (p.docs || []).map((d,i) => `<span style="display:inline-flex;align-items:center;gap:6px;background:var(--accent-bg);border:1px solid var(--accent-border);color:var(--accent);padding:4px 10px;border-radius:99px;font-size:12px;font-family:var(--font-mono)">${d}<button onclick="removerDocProcesso('${id}',${i})" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:14px;line-height:1;padding:0;opacity:0.7">×</button></span>`).join('');
-  if (STATE.gasUrl) {
-    try { await gasPOST('salvarProcesso', { dados: p }); } catch(e) { console.warn('Falha ao salvar doc no GAS:', e); }
-  }
-}
-
-// ════════════════════════════════════════════
-// EXPORTAR HISTÓRICO — PDF via jsPDF
-// ════════════════════════════════════════════
-
-async function exportarHistorico(id) {
-  const p = STATE.processos.find(x => x.id === id);
-  if (!p) return;
-
-  if (!window.jspdf) {
-    await new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-      s.onload = resolve; s.onerror = reject;
-      document.head.appendChild(s);
-    });
-  }
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-  const W = 210, ML = 18, MR = 18, TW = W - ML - MR;
-  let y = 20;
-
-  function toL(str) {
-    if (!str) return '';
-    return String(str)
-      .replace(/[àáâãä]/gi, s => /[A-Z]/.test(s) ? 'A' : 'a')
-      .replace(/[èéêë]/gi, s => /[A-Z]/.test(s) ? 'E' : 'e')
-      .replace(/[ìíîï]/gi, s => /[A-Z]/.test(s) ? 'I' : 'i')
-      .replace(/[òóôõö]/gi, s => /[A-Z]/.test(s) ? 'O' : 'o')
-      .replace(/[ùúûü]/gi, s => /[A-Z]/.test(s) ? 'U' : 'u')
-      .replace(/[ç]/gi, s => /[A-Z]/.test(s) ? 'C' : 'c')
-      .replace(/[ñ]/gi, s => /[A-Z]/.test(s) ? 'N' : 'n');
-  }
-
-  // Cabeçalho
-  doc.setFontSize(11);
-  doc.setFont('Helvetica', 'bold');
-  doc.text('PREFEITURA MUNICIPAL DE SERRA REDONDA / PB', W / 2, y, { align: 'center' });
-  y += 6;
-  doc.text('SECRETARIA MUNICIPAL DE MEIO AMBIENTE — SEMMA', W / 2, y, { align: 'center' });
-  y += 8;
-  doc.setFontSize(13);
-  doc.text('HISTORICO DE TRAMITACAO', W / 2, y, { align: 'center' });
-  y += 6;
-  doc.setFontSize(10);
-  doc.setFont('Helvetica', 'normal');
-  doc.text('Processo N' + String.fromCharCode(186) + ' ' + p.id, W / 2, y, { align: 'center' });
-  y += 10;
-
-  // Linha separadora
-  doc.setLineWidth(0.5);
-  doc.line(ML, y, W - MR, y);
-  y += 6;
-
-  // Dados do processo
-  doc.setFont('Helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.text('Requerente:', ML, y);
-  doc.setFont('Helvetica', 'normal');
-  doc.text(toL(p.req), ML + 28, y);
-  y += 5;
-  doc.setFont('Helvetica', 'bold');
-  doc.text('Modalidade:', ML, y);
-  doc.setFont('Helvetica', 'normal');
-  doc.text(toL(p.tipo), ML + 28, y);
-  doc.setFont('Helvetica', 'bold');
-  doc.text('Status:', ML + 80, y);
-  doc.setFont('Helvetica', 'normal');
-  doc.text(toL(p.status), ML + 95, y);
-  y += 5;
-  if (p.ativ) {
-    doc.setFont('Helvetica', 'bold');
-    doc.text('Atividade:', ML, y);
-    doc.setFont('Helvetica', 'normal');
-    const ativLines = doc.splitTextToSize(toL(p.ativ), TW - 28);
-    doc.text(ativLines, ML + 28, y);
-    y += ativLines.length * 4.5;
-  }
-  y += 4;
-
-  // Linha separadora
-  doc.setLineWidth(0.3);
-  doc.line(ML, y, W - MR, y);
-  y += 6;
-
-  // Cabeçalho da tabela
-  doc.setFont('Helvetica', 'bold');
-  doc.setFontSize(9);
-  doc.setFillColor(240, 242, 240);
-  doc.rect(ML, y - 4, TW, 7, 'F');
-  doc.text('Data', ML + 2, y);
-  doc.text('Evento', ML + 32, y);
-  y += 5;
-
-  // Linhas do histórico
-  doc.setFont('Helvetica', 'normal');
-  doc.setFontSize(9);
-  const hist = (p.hist || []).slice().sort((a, b) => {
-    const da = a.d || ''; const db = b.d || '';
-    return da.localeCompare(db);
-  });
-
-  hist.forEach((h, idx) => {
-    const dataFmt = fmtDate(h.d || h.data || '');
-    const texto   = toL(h.t || h.texto || '');
-    const linhas  = doc.splitTextToSize(texto, TW - 32);
-    const alturaBlocoMin = linhas.length * 4.5 + 3;
-
-    if (y + alturaBlocoMin > 280) {
-      doc.addPage();
-      y = 20;
-    }
-
-    if (idx % 2 === 0) {
-      doc.setFillColor(249, 250, 249);
-      doc.rect(ML, y - 3.5, TW, alturaBlocoMin, 'F');
-    }
-    doc.text(dataFmt, ML + 2, y);
-    doc.text(linhas, ML + 32, y);
-    y += alturaBlocoMin;
-  });
-
-  // Rodapé
-  y += 6;
-  if (y > 275) { doc.addPage(); y = 20; }
-  doc.setLineWidth(0.3);
-  doc.line(ML, y, W - MR, y);
-  y += 5;
-  doc.setFontSize(8);
-  doc.setFont('Helvetica', 'italic');
-  const hoje = new Date().toLocaleDateString('pt-BR');
-  doc.text('Emitido em ' + hoje + ' | SEMMA Serra Redonda/PB | LC 005/2025', W / 2, y, { align: 'center' });
-
-  doc.save('Historico-' + p.id + '.pdf');
-  toast('Histórico exportado!', 'ok');
-}
-
-// ════════════════════════════════════════════
 // MÁSCARAS
 // ════════════════════════════════════════════
-
-function mascaraSoCpf(el) {
-  let v = el.value.replace(/\D/g, '').slice(0, 11);
-  v = v.replace(/(\d{3})(\d)/, '$1.$2');
-  v = v.replace(/(\d{3})(\d)/, '$1.$2');
-  v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-  el.value = v;
-}
 
 function mascaraCpfCnpj(el) {
   let v = el.value.replace(/\D/g, '');
