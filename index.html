@@ -1558,10 +1558,9 @@ const STATE = {
   user: null,
   processos: [],
   licencas: [],
-  gasUrl: localStorage.getItem('sema_gas_url') || 'https://script.google.com/macros/s/AKfycbwz4OVxczTLgaXjr7svcvYRi_6bW_es4Os-3UkzVuBPvY5XeE3kwPAwgxBA_MUHS8FA5A/exec',
+  gasUrl: localStorage.getItem('sema_gas_url') || '',
   activeId: null,
   page: 1,
-  syncing: false,
 };
 
 const PER_PAGE = 12;
@@ -1609,45 +1608,12 @@ const DEMO_LIC = [
 // AUTH
 // ════════════════════════════════════════════
 
-async function doLogin() {
-  const u   = document.getElementById('in-user').value.trim();
-  const p   = document.getElementById('in-pass').value;
+function doLogin() {
+  const u = document.getElementById('in-user').value.trim();
+  const p = document.getElementById('in-pass').value;
   const err = document.getElementById('login-erro');
-  const btn = document.querySelector('#tela-login .btn-primary');
-
-  if (!u || !p) { err.textContent = 'Preencha usuário e senha.'; err.style.display = 'block'; return; }
-
-  btn.disabled = true;
-  btn.textContent = 'Verificando...';
-  err.style.display = 'none';
-
-  let usr = null;
-
-  try {
-    if (STATE.gasUrl) {
-      const res = await gasPOST('login', { usuario: u, senha: p });
-      if (res.ok) {
-        usr = { u: res.usuario, name: res.nome, role: res.perfil };
-      }
-    }
-  } catch(e) {
-    console.warn('Login GAS falhou, tentando local:', e);
-  }
-
-  // Fallback para usuários locais
-  if (!usr) {
-    usr = USERS.find(x => x.u === u && x.p === p) || null;
-  }
-
-  btn.disabled = false;
-  btn.textContent = 'Entrar';
-
-  if (!usr) {
-    err.textContent = 'Usuário ou senha incorretos.';
-    err.style.display = 'block';
-    return;
-  }
-
+  const usr = USERS.find(x => x.u === u && x.p === p);
+  if (!usr) { err.style.display = 'block'; return; }
   err.style.display = 'none';
   STATE.user = usr;
   document.getElementById('user-name').textContent = usr.name;
@@ -1689,68 +1655,16 @@ function goTo(name, navEl) {
 // DADOS
 // ════════════════════════════════════════════
 
-// ════════════════════════════════════════════
-// COMUNICAÇÃO COM GAS
-// ════════════════════════════════════════════
-
-async function gasGET(acao, params = {}) {
-  const url = new URL(STATE.gasUrl);
-  url.searchParams.set('acao', acao);
-  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
-  const resp = await fetch(url.toString(), { method: 'GET' });
-  const text = await resp.text();
-  try { return JSON.parse(text); } catch(e) { throw new Error('Resposta inválida do GAS: ' + text.slice(0, 200)); }
-}
-
-async function gasPOST(acao, body = {}) {
-  const resp = await fetch(STATE.gasUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify({ acao, ...body }),
-  });
-  const text = await resp.text();
-  try { return JSON.parse(text); } catch(e) { throw new Error('Resposta inválida do GAS: ' + text.slice(0, 200)); }
-}
-
-// ════════════════════════════════════════════
-// DADOS
-// ════════════════════════════════════════════
-
-async function loadData() {
+function loadData() {
   showLoad('Carregando dados...');
-  try {
-    if (STATE.gasUrl) {
-      const [rProc, rLic] = await Promise.all([
-        gasGET('listarProcessos'),
-        gasGET('listarLicencas'),
-      ]);
-      STATE.processos = rProc.processos || [];
-      STATE.licencas  = rLic.licencas   || [];
-
-      // Normaliza campos que podem vir como string do Sheets
-      STATE.processos.forEach(p => {
-        if (typeof p.docs  === 'string') try { p.docs  = JSON.parse(p.docs);  } catch(e) { p.docs  = []; }
-        if (typeof p.conds === 'string') try { p.conds = JSON.parse(p.conds); } catch(e) { p.conds = []; }
-        if (!Array.isArray(p.hist)) p.hist = [];
-      });
-
-      // Planilha vazia é estado normal — não carrega demo
-      if (STATE.processos.length === 0 && STATE.licencas.length === 0) {
-        toast('Conectado à planilha. Nenhum processo cadastrado ainda.', 'ok');
-      }
-    } else {
-      // Sem URL do GAS configurada — avisa mas não carrega demo
-      toast('URL do GAS não configurada. Acesse Configurações para conectar à planilha.', 'warn');
-    }
-  } catch(err) {
-    console.warn('Erro ao conectar com GAS:', err);
-    toast('Falha ao conectar com a planilha. Verifique a URL do GAS nas Configurações.', 'err');
-  } finally {
+  setTimeout(() => {
+    STATE.processos = [...DEMO];
+    STATE.licencas  = [...DEMO_LIC];
     hideLoad();
     renderDash();
     updateBadges();
     document.getElementById('cfg-gas').value = STATE.gasUrl;
-  }
+  }, 500);
 }
 
 function updateBadges() {
@@ -1939,7 +1853,7 @@ function genProtocolo() {
   return `SEMA-${ano}-${seq}`;
 }
 
-async function saveProcesso() {
+function saveProcesso() {
   const req  = document.getElementById('np-req').value.trim();
   const doc  = document.getElementById('np-doc').value.trim();
   const tipo = document.getElementById('np-tipo').value;
@@ -1947,6 +1861,7 @@ async function saveProcesso() {
 
   if (!req || !doc || !tipo || !ativ) { toast('Preencha todos os campos obrigatórios.','err'); return; }
 
+  // Monta endereço composto
   const logr  = document.getElementById('np-logradouro').value.trim();
   const num   = document.getElementById('np-numero').value.trim();
   const comp  = document.getElementById('np-complemento').value.trim();
@@ -1957,41 +1872,30 @@ async function saveProcesso() {
   const partes = [logr, num, comp, bairro, cidade && uf ? `${cidade}/${uf}` : cidade, cep ? `CEP ${cep}` : ''].filter(Boolean);
   const endFull = partes.join(', ');
 
-  const hoje = new Date().toISOString().split('T')[0];
   const np = {
-    id:    genProtocolo(),
+    id:   genProtocolo(),
     req, doc,
-    tel:   document.getElementById('np-tel').value.trim(),
-    email: document.getElementById('np-email').value.trim(),
+    tel:    document.getElementById('np-tel').value.trim(),
+    email:  document.getElementById('np-email').value.trim(),
     tipo, ativ,
-    end:   endFull,
-    lat:   document.getElementById('np-lat').value.trim(),
-    lon:   document.getElementById('np-lon').value.trim(),
-    docs:  STATE.docsTemp  || [],
-    conds: STATE.condTemp  || [],
+    end:    endFull,
+    lat:    document.getElementById('np-lat').value.trim(),
+    lon:    document.getElementById('np-lon').value.trim(),
+    docs:   STATE.docsTemp || [],
+    conds:  STATE.condTemp || [],
     status: document.getElementById('np-status').value,
-    data:  hoje,
-    obs:   document.getElementById('np-obs').value.trim(),
-    hist:  [{ d: hoje, t: `Processo aberto por ${STATE.user.name}.` }]
+    data:   new Date().toISOString().split('T')[0],
+    obs:    document.getElementById('np-obs').value.trim(),
+    hist:   [{ d: new Date().toISOString().split('T')[0], t: `Processo aberto por ${STATE.user.name}.` }]
   };
 
-  // Salva localmente primeiro (rápido)
   STATE.processos.unshift(np);
   closeModal('m-novo');
   renderDash();
   updateBadges();
   toast(`Processo ${np.id} aberto!`, 'ok');
 
-  // Grava no GAS em background
-  if (STATE.gasUrl) {
-    try {
-      await gasPOST('salvarProcesso', { dados: np });
-      await gasPOST('salvarHistorico', { proto: np.id, data: hoje, texto: `Processo aberto por ${STATE.user.name}.` });
-    } catch(e) {
-      console.warn('Falha ao sincronizar processo com GAS:', e);
-      toast('Processo salvo localmente — sincronização pendente', 'warn');
-    }
-  }
+  if (STATE.gasUrl) callGAS('novoProcesso', np);
 }
 
 // ════════════════════════════════════════════
@@ -2068,18 +1972,18 @@ function openStatus(id) {
   openModal('m-status');
 }
 
-async function confirmStatus() {
+function confirmStatus() {
   const novoStatus = document.getElementById('st-novo').value;
   const obs        = document.getElementById('st-obs').value.trim();
   const p = STATE.processos.find(x => x.id === STATE.activeId);
   if (!p) return;
 
-  const hoje = new Date().toISOString().split('T')[0];
-  const textoHist = `Status alterado para "${novoStatus}"${obs ? ': ' + obs : ''} (${STATE.user.name})`;
-
   p.status = novoStatus;
   p.hist = p.hist || [];
-  p.hist.push({ d: hoje, t: textoHist });
+  p.hist.push({
+    d: new Date().toISOString().split('T')[0],
+    t: `Status → "${novoStatus}"${obs ? ': ' + obs : ''} (${STATE.user.name})`
+  });
 
   closeModal('m-status');
   renderDash();
@@ -2087,39 +1991,23 @@ async function confirmStatus() {
   if (document.getElementById('screen-processos').classList.contains('active')) renderProcessos();
   toast(`Status atualizado para "${novoStatus}"`, 'ok');
 
-  if (STATE.gasUrl) {
-    try {
-      await gasPOST('salvarProcesso', { dados: p });
-      await gasPOST('salvarHistorico', { proto: p.id, data: hoje, texto: textoHist });
-    } catch(e) { console.warn('Falha ao sincronizar status com GAS:', e); }
-  }
+  if (STATE.gasUrl) sendGAS('atualizarStatus', { id: STATE.activeId, status: novoStatus, obs });
 }
 
 // ════════════════════════════════════════════
 // EMITIR LICENÇA
 // ════════════════════════════════════════════
 
-async function emitirLicenca(id) {
+function emitirLicenca(id) {
   const p = STATE.processos.find(x => x.id === id);
   if (!p) return;
 
-  // Busca próximo número do GAS (ou usa localStorage como fallback)
-  let proximoNum = null;
-  if (STATE.gasUrl) {
-    try {
-      const res = await gasGET('proximoNumero', { tipo: p.tipo });
-      proximoNum = res.num;
-    } catch(e) { console.warn('Falha ao buscar contador do GAS:', e); }
-  }
-  if (!proximoNum) {
-    const cnts = JSON.parse(localStorage.getItem('sema_cnt') || '{}');
-    cnts[p.tipo] = (cnts[p.tipo] || 0) + 1;
-    localStorage.setItem('sema_cnt', JSON.stringify(cnts));
-    proximoNum = cnts[p.tipo];
-  }
+  const cnts = JSON.parse(localStorage.getItem('sema_cnt') || '{}');
+  cnts[p.tipo] = (cnts[p.tipo] || 0) + 1;
+  localStorage.setItem('sema_cnt', JSON.stringify(cnts));
 
-  const prefixes = { Dispensa:'DISP', LAC:'LAC', LS:'LS', LP:'LP', LI:'LI', LO:'LO', LAI:'LAI', LAO:'LAO', LIO:'LIO', LRO:'LRO', LVPE:'LVPE', AA:'AA' };
-  const num     = `${prefixes[p.tipo]||p.tipo}-${new Date().getFullYear()}-${String(proximoNum).padStart(3,'0')}`;
+  const prefixes = { Dispensa: 'DISP', LAC:'LAC', LS:'LS', LP:'LP', LI:'LI', LO:'LO', LAI:'LAI', LAO:'LAO', LIO:'LIO', LRO:'LRO', LVPE:'LVPE', AA:'AA' };
+  const num = `${prefixes[p.tipo]||p.tipo}-${new Date().getFullYear()}-${String(cnts[p.tipo]).padStart(3,'0')}`;
   const emissao = new Date().toISOString().split('T')[0];
 
   const valDias = VALIDADES[p.tipo] || 365;
@@ -2127,8 +2015,7 @@ async function emitirLicenca(id) {
   valDate.setDate(valDate.getDate() + valDias);
   const validade = valDate.toISOString().split('T')[0];
 
-  const licenca = { num, proto: p.id, req: p.req, tipo: p.tipo, emissao, validade };
-  STATE.licencas.push(licenca);
+  STATE.licencas.push({ num, proto: p.id, req: p.req, tipo: p.tipo, emissao, validade });
   p.status = 'Emitido';
   p.hist.push({ d: emissao, t: `Licença emitida: ${num}` });
 
@@ -2136,14 +2023,6 @@ async function emitirLicenca(id) {
   renderDash();
   updateBadges();
   toast(`Licença ${num} emitida com sucesso!`, 'ok');
-
-  if (STATE.gasUrl) {
-    try {
-      await gasPOST('salvarLicenca', { dados: licenca });
-      await gasPOST('salvarProcesso', { dados: p });
-      await gasPOST('salvarHistorico', { proto: p.id, data: emissao, texto: `Licenca emitida: ${num}` });
-    } catch(e) { console.warn('Falha ao sincronizar licença com GAS:', e); }
-  }
 }
 
 // ════════════════════════════════════════════
@@ -2155,6 +2034,21 @@ function saveConfig() {
   STATE.gasUrl = url;
   localStorage.setItem('sema_gas_url', url);
   toast('URL do GAS salva!', 'ok');
+}
+
+// ════════════════════════════════════════════
+// GAS (placeholder)
+// ════════════════════════════════════════════
+
+async function sendGAS(acao, dados) {
+  if (!STATE.gasUrl) return;
+  try {
+    await fetch(STATE.gasUrl, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ acao, dados })
+    });
+  } catch(e) { console.warn('GAS indisponível:', e); }
 }
 
 // ════════════════════════════════════════════
