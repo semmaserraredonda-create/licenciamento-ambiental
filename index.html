@@ -778,7 +778,7 @@ tbody td {
   backdrop-filter: blur(4px);
   z-index: 200;
   display: none;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   padding: 40px 16px;
   overflow-y: auto;
@@ -795,6 +795,9 @@ tbody td {
   margin: auto;
   box-shadow: var(--shadow2);
   animation: modalIn 0.2s ease both;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-lg { max-width: 720px; }
@@ -811,6 +814,7 @@ tbody td {
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .modal-header h2 {
@@ -842,7 +846,13 @@ tbody td {
 
 .modal-close:hover { background: var(--red-bg); color: var(--red); border-color: rgba(248,113,113,0.25); }
 
-.modal-body { padding: 24px; }
+.modal-footer { flex-shrink: 0; }
+
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
 
 .modal-footer {
   padding: 16px 24px;
@@ -1091,10 +1101,15 @@ tbody td {
       </div>
 
       <div class="nav-section">Processos</div>
-      <div class="nav-item" onclick="goTo('processos',this)">
+      <div class="nav-item" onclick="goTo('processos',this);setFilter('')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         Todos os Processos
         <span class="nav-badge" id="nb-total">0</span>
+      </div>
+      <div class="nav-item" onclick="goTo('processos',this);setFilter('Aguardando Documentos')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Aguardando Docs
+        <span class="nav-badge" id="nb-aguardando">0</span>
       </div>
       <div class="nav-item" onclick="goTo('processos',this);setFilter('Em Análise')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -1105,6 +1120,11 @@ tbody td {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         Com Exigência
         <span class="nav-badge" id="nb-exigencia">0</span>
+      </div>
+      <div class="nav-item" onclick="goTo('processos',this);setFilter('Aprovado')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="20 6 9 17 4 12"/></svg>
+        Aprovados
+        <span class="nav-badge" id="nb-aprovado">0</span>
       </div>
       <div class="nav-item" onclick="openModalNovo()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
@@ -1412,15 +1432,17 @@ tbody td {
             </button>
           </div>
         </div>
-        <div class="field">
+        <div class="field span2">
           <label>Logradouro <span class="req">*</span></label>
           <input id="np-logradouro" placeholder="RUA, AVENIDA, ETC." style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
         </div>
         <div class="field">
+          <label>Número <span class="req">*</span></label>
+          <input id="np-numero" placeholder="Nº OU S/N" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+        </div>
+        <div class="field">
           <label>Bairro <span class="req">*</span></label>
           <input id="np-bairro" placeholder="BAIRRO" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
-        </div>
-          <input id="np-numero" placeholder="Nº OU S/N" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
         </div>
         <div class="field">
           <label>Complemento</label>
@@ -1438,11 +1460,11 @@ tbody td {
         <!-- COORDENADAS GEOGRÁFICAS -->
         <div class="field">
           <label>Latitude</label>
-          <input id="np-lat" placeholder="Ex: -7.187778 ou 7°11'16&quot;S" onblur="formatarCoordenada(this, true)">
+          <input id="np-lat" placeholder="Ex: -7.187778 → 7°11'16&quot;S" oninput="tryFormatCoordenada(this, true)" onblur="formatarCoordenada(this, true)">
         </div>
         <div class="field">
           <label>Longitude</label>
-          <input id="np-lon" placeholder="Ex: -35.678056 ou 35°40'41&quot;W" onblur="formatarCoordenada(this, false)">
+          <input id="np-lon" placeholder="Ex: -35.678056 → 35°40'41&quot;W" oninput="tryFormatCoordenada(this, false)" onblur="formatarCoordenada(this, false)">
         </div>
 
         <!-- DOCUMENTAÇÃO -->
@@ -1774,15 +1796,24 @@ async function loadData() {
 
 function updateBadges() {
   const p = STATE.processos;
-  document.getElementById('nb-total').textContent    = p.length;
-  document.getElementById('nb-analise').textContent  = p.filter(x => x.status === 'Em Análise').length;
-  document.getElementById('nb-exigencia').textContent= p.filter(x => x.status === 'Exigência').length;
-  document.getElementById('nb-emitidas').textContent = STATE.licencas.length;
+  const nb = id => { const el = document.getElementById(id); if (el) el.textContent = 0; };
+  document.getElementById('nb-total').textContent      = p.length;
+  document.getElementById('nb-analise').textContent    = p.filter(x => x.status === 'Em Análise').length;
+  document.getElementById('nb-exigencia').textContent  = p.filter(x => x.status === 'Exigência').length;
+  document.getElementById('nb-emitidas').textContent   = STATE.licencas.length;
+  const ag = document.getElementById('nb-aguardando');
+  if (ag) ag.textContent = p.filter(x => x.status === 'Aguardando Documentos').length;
+  const ap = document.getElementById('nb-aprovado');
+  if (ap) ap.textContent = p.filter(x => x.status === 'Aprovado').length;
 }
 
-// ════════════════════════════════════════════
-// DASHBOARD
-// ════════════════════════════════════════════
+function setFilter(s) {
+  const fStatus = document.getElementById('f-status');
+  if (fStatus) fStatus.value = s;
+  STATE.page = 1;
+  // Garante renderização mesmo se a tela já estava ativa
+  renderProcessos();
+}
 
 function renderDash() {
   const p = STATE.processos;
@@ -1973,6 +2004,16 @@ async function saveProcesso() {
   if (!ativ) { toast('Preencha a Atividade / Empreendimento.', 'err'); return; }
   if (!tel)  { toast('Preencha o Telefone.', 'err'); return; }
 
+  // Valida dados do proprietário se CNPJ
+  if (doc.replace(/\D/g, '').length === 14) {
+    const propNome = (document.getElementById('np-prop-nome')?.value || '').trim();
+    const propCpf  = (document.getElementById('np-prop-cpf')?.value  || '').trim();
+    const propTel  = (document.getElementById('np-prop-tel')?.value  || '').trim();
+    if (!propNome) { toast('Preencha o Nome do Proprietário / Responsável Legal.', 'err'); return; }
+    if (!propCpf)  { toast('Preencha o CPF do Proprietário.', 'err'); return; }
+    if (!propTel)  { toast('Preencha o Contato do Proprietário.', 'err'); return; }
+  }
+
   const cep   = document.getElementById('np-cep').value.trim();
   const logr  = document.getElementById('np-logradouro').value.trim().toUpperCase();
   const bairro= document.getElementById('np-bairro').value.trim().toUpperCase();
@@ -2146,8 +2187,13 @@ async function confirmStatus() {
   closeModal('m-status');
   renderDash();
   updateBadges();
-  if (document.getElementById('screen-processos').classList.contains('active')) renderProcessos();
+  renderProcessos(); // Sempre atualiza, independente da tela ativa
   toast(`Status atualizado para "${novoStatus}"`, 'ok');
+
+  // Se ficou Aprovado, reabre o detalhe para mostrar botão Emitir Licença
+  if (novoStatus === 'Aprovado') {
+    setTimeout(() => openDetalhe(p.id), 300);
+  }
 
   if (STATE.gasUrl) {
     try {
@@ -2197,7 +2243,16 @@ async function emitirLicenca(id) {
   closeModal('m-detalhe');
   renderDash();
   updateBadges();
-  toast(`Licença ${num} emitida com sucesso!`, 'ok');
+  renderProcessos();
+  toast(`Licença ${num} emitida! Gerando PDF...`, 'ok');
+
+  // Navega para licenças e gera PDF automaticamente
+  const navLic = document.querySelector('[onclick*="licencas"]');
+  goTo('licencas', navLic);
+  renderLicencas();
+
+  // Gera PDF em seguida (pequeno delay para a tela renderizar)
+  setTimeout(() => gerarPDF(licenca), 600);
 
   if (STATE.gasUrl) {
     try {
@@ -2233,8 +2288,18 @@ function statusPill(s) {
 
 function fmtDate(iso) {
   if (!iso) return '—';
-  const [a,m,d] = iso.split('-');
-  return `${d}/${m}/${a}`;
+  const s = String(iso).trim();
+  // Extrai YYYY-MM-DD de qualquer formato
+  const m = s.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+  // Fallback: tenta Date genérico
+  try {
+    const d = new Date(s);
+    if (!isNaN(d.getTime())) {
+      return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+    }
+  } catch(e) {}
+  return '—';
 }
 
 function emptyRow(cols, inner = false) {
@@ -2352,6 +2417,19 @@ function decimalToGMS(valor, isLat) {
   const seg = Math.round((minDecimal - min) * 60);
   const dir = isLat ? (valor < 0 ? 'S' : 'N') : (valor < 0 ? 'W' : 'E');
   return `${graus}°${String(min).padStart(2,'0')}'${String(seg).padStart(2,'0')}"${dir}`;
+}
+
+function tryFormatCoordenada(input, isLat) {
+  const val = input.value.trim();
+  if (!val) return;
+  if (/^-?\d+\.\d{2,}$/.test(val) || /^-?\d{1,3}$/.test(val) && val.length >= 1) {
+    const num = parseFloat(val.replace(',', '.'));
+    if (!isNaN(num) && Math.abs(num) <= (isLat ? 90 : 180)) {
+      if (/^-?\d+\.\d{4,}$/.test(val)) {
+        input.value = decimalToGMS(num, isLat);
+      }
+    }
+  }
 }
 
 function formatarCoordenada(input, isLat) {
@@ -2978,39 +3056,46 @@ function renderCondList() {
 
 function adicionarDoc() {
   const input = document.getElementById('np-doc-nome');
-  const nome  = input.value.trim();
-  if (!nome) return;
-  if (!STATE.docsTemp) STATE.docsTemp = [];
+  if (!input) { console.warn('adicionarDoc: campo nao encontrado'); return; }
+  const nome = input.value.trim().toUpperCase();
+  if (!nome) {
+    input.style.outline = '2px solid var(--red)';
+    setTimeout(() => { input.style.outline = ''; }, 1500);
+    input.focus();
+    return;
+  }
+  if (!Array.isArray(STATE.docsTemp)) STATE.docsTemp = [];
   STATE.docsTemp.push(nome);
-  renderDocsList();
   input.value = '';
+  input.style.outline = '';
+  renderDocsList();
   input.focus();
 }
 
 function removerDoc(idx) {
+  if (!Array.isArray(STATE.docsTemp)) return;
   STATE.docsTemp.splice(idx, 1);
   renderDocsList();
 }
 
 function renderDocsList() {
   const lista = document.getElementById('docs-lista');
-  lista.innerHTML = (STATE.docsTemp || []).map((d, i) => `
-    <span style="display:inline-flex;align-items:center;gap:6px;background:var(--accent-bg);border:1px solid var(--accent-border);color:var(--accent);padding:4px 10px;border-radius:99px;font-size:12px;font-family:var(--font-mono)">
-      ${d}
-      <button onclick="removerDoc(${i})" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:14px;line-height:1;padding:0;opacity:0.7" title="Remover">×</button>
-    </span>
-  `).join('');
+  if (!lista) { console.warn('renderDocsList: docs-lista nao encontrado'); return; }
+  const docs = Array.isArray(STATE.docsTemp) ? STATE.docsTemp : [];
+  if (docs.length === 0) { lista.innerHTML = ''; return; }
+  lista.innerHTML = docs.map((d, i) =>
+    '<span style="display:inline-flex;align-items:center;gap:6px;background:var(--accent-bg);border:1px solid var(--accent-border);color:var(--accent);padding:4px 10px;border-radius:99px;font-size:12px;font-family:var(--font-mono)">' +
+    d +
+    '<button onclick="removerDoc(' + i + ')" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:16px;line-height:1;padding:0 0 1px 4px;opacity:0.7" title="Remover">×</button>' +
+    '</span>'
+  ).join(' ');
 }
 
-// Enter no campo de documento também adiciona
-document.addEventListener('DOMContentLoaded', () => {
-  const inp = document.getElementById('np-doc-nome');
-  if (inp) inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); adicionarDoc(); } });
-});
-
-// Fechar overlay ao clicar fora
+// Fechar overlay APENAS quando o clique começa E termina no overlay (não ao arrastar)
 document.querySelectorAll('.overlay').forEach(o => {
-  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+  let mousedownOnOverlay = false;
+  o.addEventListener('mousedown', e => { mousedownOnOverlay = e.target === o; });
+  o.addEventListener('mouseup',   e => { if (mousedownOnOverlay && e.target === o) o.classList.remove('open'); });
 });
 </script>
 </body>
