@@ -545,7 +545,6 @@ body {
 table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 800px;
 }
 
 thead th {
@@ -580,9 +579,7 @@ tbody td {
   font-family: var(--font-mono);
   font-size: 12px;
   color: var(--accent);
-  font-weight: 600;
-  white-space: nowrap;
-  display: inline-block;
+  font-weight: 500;
 }
 
 /* BADGES */
@@ -706,8 +703,6 @@ td[style*="font-family:var(--font-mono)"],
   font-weight: 600;
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  display: inline-block;
 }
 
 /* Badges de contagem na sidebar */
@@ -778,7 +773,7 @@ tbody td {
   backdrop-filter: blur(4px);
   z-index: 200;
   display: none;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   padding: 40px 16px;
   overflow-y: auto;
@@ -795,9 +790,6 @@ tbody td {
   margin: auto;
   box-shadow: var(--shadow2);
   animation: modalIn 0.2s ease both;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
 }
 
 .modal-lg { max-width: 720px; }
@@ -814,7 +806,6 @@ tbody td {
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  flex-shrink: 0;
 }
 
 .modal-header h2 {
@@ -846,13 +837,7 @@ tbody td {
 
 .modal-close:hover { background: var(--red-bg); color: var(--red); border-color: rgba(248,113,113,0.25); }
 
-.modal-footer { flex-shrink: 0; }
-
-.modal-body {
-  padding: 24px;
-  overflow-y: auto;
-  flex: 1;
-}
+.modal-body { padding: 24px; }
 
 .modal-footer {
   padding: 16px 24px;
@@ -1075,7 +1060,7 @@ tbody td {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
       Acessar o Sistema
     </button>
-    <div class="login-hint">Sistema de Licenciamento Ambiental — SEMMA Serra Redonda/PB</div>
+    <div class="login-hint">Credenciais demo: admin / admin123 · tecnico / tec123</div>
   </div>
 </div>
 
@@ -1101,15 +1086,10 @@ tbody td {
       </div>
 
       <div class="nav-section">Processos</div>
-      <div class="nav-item" onclick="goTo('processos',this);setFilter('')">
+      <div class="nav-item" onclick="goTo('processos',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         Todos os Processos
         <span class="nav-badge" id="nb-total">0</span>
-      </div>
-      <div class="nav-item" onclick="goTo('processos',this);setFilter('Aguardando Documentos')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        Aguardando Docs
-        <span class="nav-badge" id="nb-aguardando">0</span>
       </div>
       <div class="nav-item" onclick="goTo('processos',this);setFilter('Em Análise')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -1120,11 +1100,6 @@ tbody td {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         Com Exigência
         <span class="nav-badge" id="nb-exigencia">0</span>
-      </div>
-      <div class="nav-item" onclick="goTo('processos',this);setFilter('Aprovado')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="20 6 9 17 4 12"/></svg>
-        Aprovados
-        <span class="nav-badge" id="nb-aprovado">0</span>
       </div>
       <div class="nav-item" onclick="openModalNovo()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
@@ -1222,7 +1197,6 @@ tbody td {
                 </select>
               </div>
             </div>
-            <div style="overflow-x:auto">
             <table>
               <thead>
                 <tr>
@@ -1238,10 +1212,9 @@ tbody td {
               </thead>
               <tbody id="proc-tbody"></tbody>
             </table>
-            </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border);margin-top:0">
-              <span class="pagination-info" id="pag-info" style="font-size:12px;color:var(--text3)">—</span>
-              <div class="page-btns" id="pag-btns" style="display:flex;gap:4px"></div>
+            <div class="pagination">
+              <span class="pagination-info" id="pag-info">—</span>
+              <div class="page-btns" id="pag-btns"></div>
             </div>
           </div>
         </div>
@@ -1340,40 +1313,19 @@ tbody td {
       <div class="grid2">
         <div class="field span2">
           <label>Nome / Razão Social <span class="req">*</span></label>
-          <input id="np-req" placeholder="NOME COMPLETO OU RAZÃO SOCIAL" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+          <input id="np-req" placeholder="Nome completo ou razão social">
         </div>
         <div class="field">
           <label>CPF / CNPJ <span class="req">*</span></label>
-          <input id="np-doc" placeholder="000.000.000-00 ou 00.000.000/0001-00" oninput="mascaraCpfCnpj(this);checkCNPJ()" maxlength="18">
+          <input id="np-doc" placeholder="000.000.000-00 ou 00.000.000/0001-00" oninput="mascaraCpfCnpj(this)" maxlength="18">
         </div>
         <div class="field">
-          <label>Telefone <span class="req">*</span></label>
+          <label>Telefone</label>
           <input id="np-tel" placeholder="(83) 99000-0000" oninput="mascaraTelefone(this)" maxlength="15">
         </div>
         <div class="field span2">
           <label>E-mail</label>
           <input id="np-email" type="email" placeholder="email@exemplo.com">
-        </div>
-      </div>
-
-      <!-- SEÇÃO PROPRIETÁRIO — aparece apenas para CNPJ -->
-      <div id="secao-proprietario" style="display:none">
-        <hr class="divider">
-        <div class="section-label">Responsável Legal / Proprietário</div>
-        <div style="font-size:11px;color:var(--text3);margin-bottom:10px">Estes dados são apenas para registro interno — não constam na licença.</div>
-        <div class="grid2">
-          <div class="field span2">
-            <label>Nome do Proprietário</label>
-            <input id="np-prop-nome" placeholder="NOME COMPLETO DO RESPONSÁVEL LEGAL" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
-          </div>
-          <div class="field">
-            <label>CPF do Proprietário</label>
-            <input id="np-prop-cpf" placeholder="000.000.000-00" oninput="mascaraCpf(this)" maxlength="14">
-          </div>
-          <div class="field">
-            <label>Contato do Proprietário</label>
-            <input id="np-prop-tel" placeholder="(83) 99000-0000" oninput="mascaraTelefone(this)" maxlength="15">
-          </div>
         </div>
       </div>
 
@@ -1419,12 +1371,12 @@ tbody td {
         </div>
         <div class="field span2">
           <label>Atividade / Empreendimento <span class="req">*</span></label>
-          <input id="np-ativ" placeholder="EX: AVICULTURA CONVENCIONAL — 10.000 AVES (LAC)" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+          <input id="np-ativ" placeholder="Ex: Avicultura convencional — 10.000 aves (LAC)">
         </div>
 
-        <!-- ENDEREÇO -->
+        <!-- ENDEREÇO COM CEP -->
         <div class="field">
-          <label>CEP <span class="req">*</span></label>
+          <label>CEP</label>
           <div style="display:flex;gap:8px">
             <input id="np-cep" placeholder="00000-000" oninput="mascaraCep(this)" maxlength="9" style="flex:1">
             <button type="button" class="btn btn-ghost" onclick="buscarCep()" style="padding:10px 14px;flex-shrink:0" id="btn-cep">
@@ -1432,49 +1384,51 @@ tbody td {
             </button>
           </div>
         </div>
+        <div class="field">
+          <label>Bairro</label>
+          <input id="np-bairro" placeholder="Bairro">
+        </div>
         <div class="field span2">
-          <label>Logradouro <span class="req">*</span></label>
-          <input id="np-logradouro" placeholder="RUA, AVENIDA, ETC." style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+          <label>Logradouro</label>
+          <input id="np-logradouro" placeholder="Rua, Avenida, etc.">
         </div>
         <div class="field">
-          <label>Número <span class="req">*</span></label>
-          <input id="np-numero" placeholder="Nº OU S/N" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
-        </div>
-        <div class="field">
-          <label>Bairro <span class="req">*</span></label>
-          <input id="np-bairro" placeholder="BAIRRO" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+          <label>Número</label>
+          <input id="np-numero" placeholder="Nº ou S/N">
         </div>
         <div class="field">
           <label>Complemento</label>
-          <input id="np-complemento" placeholder="SALA, LOTE, QUADRA..." style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+          <input id="np-complemento" placeholder="Sala, Lote, Quadra...">
         </div>
         <div class="field">
           <label>Cidade</label>
-          <input id="np-cidade" placeholder="Serra Redonda" value="Serra Redonda" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+          <input id="np-cidade" placeholder="Serra Redonda" value="Serra Redonda">
         </div>
         <div class="field">
           <label>UF</label>
-          <input id="np-uf" placeholder="PB" value="PB" maxlength="2" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+          <input id="np-uf" placeholder="PB" value="PB" maxlength="2">
         </div>
 
         <!-- COORDENADAS GEOGRÁFICAS -->
         <div class="field">
           <label>Latitude</label>
-          <input id="np-lat" placeholder="Ex: -7.187778 → 7°11'16&quot;S" oninput="tryFormatCoordenada(this, true)" onblur="formatarCoordenada(this, true)">
+          <input id="np-lat" placeholder="Ex: 7°11'16&quot;S ou -7.187778">
         </div>
         <div class="field">
           <label>Longitude</label>
-          <input id="np-lon" placeholder="Ex: -35.678056 → 35°40'41&quot;W" oninput="tryFormatCoordenada(this, false)" onblur="formatarCoordenada(this, false)">
+          <input id="np-lon" placeholder="Ex: 35°40'41&quot;W ou -35.678056">
         </div>
 
         <!-- DOCUMENTAÇÃO -->
         <div class="field span2">
           <label>Documentos Recebidos</label>
-          <div id="docs-lista" style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px"></div>
-          <div style="display:flex;gap:8px">
-            <input id="np-doc-nome" placeholder="Nome do documento (ex: RG, Planta baixa, ART...)" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;color:var(--text);font-family:var(--font-body);font-size:14px;outline:none" onkeydown="if(event.key==='Enter'){event.preventDefault();adicionarDoc();}">
-            <button type="button" class="btn btn-ghost" onclick="adicionarDoc()" style="flex-shrink:0">+ Adicionar</button>
-          </div>
+          <div id="docs-lista" style="margin-bottom:8px;display:flex;flex-direction:column;gap:6px"></div>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--bg3);border:1px dashed var(--border2);border-radius:var(--radius);padding:10px 14px;transition:border-color 0.15s" onmouseenter="this.style.borderColor='var(--accent)'" onmouseleave="this.style.borderColor=''">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;color:var(--accent);flex-shrink:0"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span style="font-size:13px;color:var(--text2)">Clique para selecionar arquivos <span style="color:var(--text3);font-size:11px">(PDF, imagens, Word, Excel...)</span></span>
+            <input type="file" id="np-doc-file" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.zip" style="display:none" onchange="previewDocsSelecionados(this)">
+          </label>
+          <div style="font-size:10px;color:var(--text3);margin-top:4px;font-family:var(--font-mono)">Os arquivos serão enviados ao Google Drive ao salvar o processo.</div>
         </div>
 
         <!-- CONDICIONANTES ADICIONAIS -->
@@ -1482,7 +1436,7 @@ tbody td {
           <label>Condicionantes Adicionais</label>
           <div id="cond-lista" style="margin-bottom:8px;display:flex;flex-direction:column;gap:6px"></div>
           <div style="display:flex;gap:8px">
-            <input id="np-cond-texto" placeholder="Digite uma condicionante adicional específica para este processo..." style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;color:var(--text);font-family:var(--font-body);font-size:14px;outline:none" onkeydown="if(event.key==='Enter'){event.preventDefault();adicionarCondicionante();}">
+            <input id="np-cond-texto" placeholder="Digite uma condicionante adicional específica para este processo..." style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;color:var(--text);font-family:var(--font-body);font-size:14px;outline:none">
             <button type="button" class="btn btn-ghost" onclick="adicionarCondicionante()" style="flex-shrink:0">+ Adicionar</button>
           </div>
           <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-top:6px">
@@ -1492,7 +1446,7 @@ tbody td {
 
         <div class="field span2">
           <label>Observações</label>
-          <textarea id="np-obs" placeholder="Informações adicionais..." style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></textarea>
+          <textarea id="np-obs" placeholder="Informações adicionais..."></textarea>
         </div>
       </div>
     </div>
@@ -1558,34 +1512,8 @@ tbody td {
   </div>
 </div>
 
-<!-- MODAL VISUALIZAR LICENÇA -->
-<div class="overlay" id="m-preview">
-  <div class="modal" style="max-width:720px;width:95vw;max-height:92vh;display:flex;flex-direction:column">
-    <div class="modal-header" style="flex-shrink:0">
-      <div>
-        <h2 id="prev-titulo">Licença</h2>
-        <p id="prev-subtitulo" style="font-family:var(--font-mono);font-size:11px;color:var(--text3)">—</p>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <button class="btn btn-primary" id="prev-btn-imprimir" onclick="imprimirLicenca()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-          Baixar PDF
-        </button>
-        <button class="modal-close" onclick="closeModal('m-preview')">✕</button>
-      </div>
-    </div>
-    <div class="modal-body" style="flex:1;overflow-y:auto;padding:0">
-      <!-- Prévia renderizada em HTML, idêntica ao documento -->
-      <div id="prev-corpo" style="background:#f5f5f5;padding:24px;min-height:400px">
-        <div id="prev-doc" style="background:#fff;max-width:640px;margin:0 auto;padding:32px 36px;font-family:Arial,sans-serif;font-size:12px;color:#111;box-shadow:0 2px 16px rgba(0,0,0,0.12);line-height:1.5">
-          <!-- preenchido dinamicamente -->
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <script>
+
 // ════════════════════════════════════════════
 // DADOS E ESTADO
 // ════════════════════════════════════════════
@@ -2117,18 +2045,25 @@ function openDetalhe(id) {
     ${p.conds && p.conds.length ? `<div class="detail-row"><span class="detail-key">Cond. Adicionais</span><span class="detail-val"><ol start="8" style="font-size:12px;color:var(--text2);padding-left:16px;margin:0">${p.conds.map(c => `<li style="margin-bottom:3px">${c}</li>`).join('')}</ol></span></div>` : ''}
 
     <hr class="divider">
-    <div class="section-label" style="display:flex;align-items:center;justify-content:space-between">
-      <span>Documentos Recebidos</span>
+    <div class="section-label">Documentos do Processo</div>
+    <div id="det-docs-lista" style="margin-bottom:10px;display:flex;flex-direction:column;gap:6px;min-height:24px">
+      ${(p.docs||[]).length === 0
+        ? '<span style="font-size:12px;color:var(--text3)">Nenhum documento anexado.</span>'
+        : (p.docs||[]).map(d => {
+            const nome = typeof d === 'object' ? d.nome : d;
+            const link = typeof d === 'object' ? d.link : null;
+            return link
+              ? `<a href="${link}" target="_blank" style="display:inline-flex;align-items:center;gap:7px;background:var(--accent-bg);border:1px solid var(--accent-border);color:var(--accent);padding:6px 12px;border-radius:8px;font-size:12px;text-decoration:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${nome} <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;opacity:0.6"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>`
+              : `<span style="display:inline-flex;align-items:center;gap:7px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:6px 12px;border-radius:8px;font-size:12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${nome}</span>`;
+          }).join('')
+      }
     </div>
-    <div id="det-docs-lista" style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:6px;min-height:24px">
-      ${docsList || '<span style="font-size:12px;color:var(--text3)">Nenhum documento registrado.</span>'}
-    </div>
-    <div style="display:flex;gap:8px;margin-bottom:4px">
-      <input id="det-doc-input" placeholder="Nome do documento (ex: ART, Planta baixa, Certidão...)"
-        style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:9px 12px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none"
-        onkeydown="if(event.key==='Enter'){event.preventDefault();adicionarDocProcesso();}">
-      <button class="btn btn-ghost" onclick="adicionarDocProcesso()" style="flex-shrink:0">+ Adicionar</button>
-    </div>
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--bg3);border:1px dashed var(--border2);border-radius:var(--radius);padding:9px 14px;margin-bottom:4px;transition:border-color 0.15s" onmouseenter="this.style.borderColor='var(--accent)'" onmouseleave="this.style.borderColor=''">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--accent);flex-shrink:0"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <span style="font-size:13px;color:var(--text2)">Clique para anexar documentos ao processo</span>
+      <input type="file" id="det-doc-file" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.zip" style="display:none" onchange="uploadDocumentoProcesso(this, '${p.id}')">
+    </label>
+    <div id="det-upload-status" style="font-size:11px;color:var(--accent);font-family:var(--font-mono);min-height:16px;margin-bottom:4px"></div>
 
     <hr class="divider">
     <div class="section-label">Histórico de Tramitação</div>
@@ -3054,22 +2989,22 @@ function renderCondList() {
   `).join('');
 }
 
-function adicionarDoc() {
-  const input = document.getElementById('np-doc-nome');
-  if (!input) { console.warn('adicionarDoc: campo nao encontrado'); return; }
-  const nome = input.value.trim().toUpperCase();
-  if (!nome) {
-    input.style.outline = '2px solid var(--red)';
-    setTimeout(() => { input.style.outline = ''; }, 1500);
-    input.focus();
-    return;
-  }
+// ════════════════════════════════════════════
+// DOCUMENTOS — Upload para Google Drive
+// ════════════════════════════════════════════
+
+function previewDocsSelecionados(input) {
+  var files = Array.from(input.files);
+  if (!files.length) return;
   if (!Array.isArray(STATE.docsTemp)) STATE.docsTemp = [];
-  STATE.docsTemp.push(nome);
-  input.value = '';
-  input.style.outline = '';
+  files.forEach(function(f) { STATE.docsTemp.push({ nome: f.name, file: f, status: 'pendente' }); });
   renderDocsList();
-  input.focus();
+  input.value = '';
+}
+
+function adicionarDoc() {
+  var fi = document.getElementById('np-doc-file');
+  if (fi) fi.click();
 }
 
 function removerDoc(idx) {
@@ -3079,17 +3014,93 @@ function removerDoc(idx) {
 }
 
 function renderDocsList() {
-  const lista = document.getElementById('docs-lista');
-  if (!lista) { console.warn('renderDocsList: docs-lista nao encontrado'); return; }
-  const docs = Array.isArray(STATE.docsTemp) ? STATE.docsTemp : [];
+  var lista = document.getElementById('docs-lista');
+  if (!lista) return;
+  var docs = Array.isArray(STATE.docsTemp) ? STATE.docsTemp : [];
   if (docs.length === 0) { lista.innerHTML = ''; return; }
-  lista.innerHTML = docs.map((d, i) =>
-    '<span style="display:inline-flex;align-items:center;gap:6px;background:var(--accent-bg);border:1px solid var(--accent-border);color:var(--accent);padding:4px 10px;border-radius:99px;font-size:12px;font-family:var(--font-mono)">' +
-    d +
-    '<button onclick="removerDoc(' + i + ')" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:16px;line-height:1;padding:0 0 1px 4px;opacity:0.7" title="Remover">×</button>' +
-    '</span>'
-  ).join(' ');
+  lista.innerHTML = docs.map(function(d, i) {
+    var nome   = typeof d === 'object' ? d.nome : d;
+    var status = typeof d === 'object' ? (d.status || 'pendente') : 'ok';
+    var link   = typeof d === 'object' ? d.link : null;
+    var cor    = status === 'ok' ? 'var(--accent)' : status === 'erro' ? 'var(--red)' : 'var(--amber)';
+    var label  = status === 'enviando' ? nome + ' (enviando...)' : nome;
+    var inner  = link ? '<a href="' + link + '" target="_blank" style="color:inherit;text-decoration:none">' + label + '</a>' : label;
+    return '<div style="display:inline-flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border2);color:' + cor + ';padding:5px 10px;border-radius:8px;font-size:12px;margin:2px">'
+      + inner
+      + (status !== 'enviando' ? '<button onclick="removerDoc(' + i + ')" style="background:none;border:none;color:inherit;cursor:pointer;font-size:15px;line-height:1;padding:0 0 1px 4px;opacity:0.6" title="Remover">x</button>' : '')
+      + '</div>';
+  }).join('');
 }
+
+function fileToBase64(file) {
+  return new Promise(function(resolve, reject) {
+    var reader = new FileReader();
+    reader.onload  = function() { resolve(reader.result.split(',')[1]); };
+    reader.onerror = function() { reject(reader.error); };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadDocumentosPendentes(proto) {
+  if (!Array.isArray(STATE.docsTemp) || !STATE.gasUrl) return;
+  for (var i = 0; i < STATE.docsTemp.length; i++) {
+    var d = STATE.docsTemp[i];
+    if (!d || !d.file) continue;
+    STATE.docsTemp[i].status = 'enviando';
+    renderDocsList();
+    try {
+      var b64 = await fileToBase64(d.file);
+      var res = await gasPOST('uploadDocumento', { proto: proto, nome: d.nome, dados: b64, mimeType: d.file.type || 'application/octet-stream' });
+      STATE.docsTemp[i] = res.ok ? { nome: res.nome, link: res.link, status: 'ok' } : { nome: d.nome, status: 'erro' };
+    } catch(e) { STATE.docsTemp[i].status = 'erro'; }
+    renderDocsList();
+  }
+}
+
+async function uploadDocumentoProcesso(input, proto) {
+  var files = Array.from(input.files);
+  if (!files.length) return;
+  var statusEl = document.getElementById('det-upload-status');
+  if (statusEl) statusEl.textContent = 'Enviando ' + files.length + ' arquivo(s) para o Google Drive...';
+  var p = STATE.processos.find(function(x) { return x.id === proto; });
+  if (!p) return;
+  if (!Array.isArray(p.docs)) p.docs = [];
+  var enviados = 0;
+  for (var j = 0; j < files.length; j++) {
+    var file = files[j];
+    try {
+      var b64 = await fileToBase64(file);
+      var res = await gasPOST('uploadDocumento', { proto: proto, nome: file.name, dados: b64, mimeType: file.type || 'application/octet-stream' });
+      if (res.ok) {
+        p.docs.push({ nome: res.nome, link: res.link });
+        enviados++;
+        if (statusEl) statusEl.textContent = 'Enviados ' + enviados + '/' + files.length + '...';
+      } else { toast('Erro ao enviar ' + file.name, 'err'); }
+    } catch(e) { toast('Falha: ' + file.name, 'err'); console.warn(e); }
+  }
+  if (STATE.gasUrl && enviados > 0) {
+    try { await gasPOST('salvarProcesso', { dados: p }); } catch(e) {}
+  }
+  var lista = document.getElementById('det-docs-lista');
+  if (lista && p.docs.length > 0) {
+    lista.innerHTML = p.docs.map(function(d) {
+      var nome = typeof d === 'object' ? d.nome : d;
+      var link = typeof d === 'object' ? d.link : null;
+      return link
+        ? '<a href="' + link + '" target="_blank" style="display:inline-flex;align-items:center;gap:7px;background:var(--accent-bg);border:1px solid var(--accent-border);color:var(--accent);padding:6px 12px;border-radius:8px;font-size:12px;text-decoration:none;margin:2px">[DOC] ' + nome + '</a>'
+        : '<span style="display:inline-flex;align-items:center;gap:7px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:6px 12px;border-radius:8px;font-size:12px;margin:2px">' + nome + '</span>';
+    }).join('');
+  }
+  if (statusEl) {
+    statusEl.textContent = enviados > 0 ? (enviados + ' arquivo(s) enviado(s) ao Drive com sucesso!') : 'Nenhum arquivo enviado.';
+    setTimeout(function() { if (statusEl) statusEl.textContent = ''; }, 4000);
+  }
+  input.value = '';
+  if (enviados > 0) toast(enviados + ' documento(s) enviado(s) ao Drive!', 'ok');
+}
+
+async function adicionarDocProcesso() {}
+
 
 // Fechar overlay APENAS quando o clique começa E termina no overlay (não ao arrastar)
 document.querySelectorAll('.overlay').forEach(o => {
@@ -3097,6 +3108,7 @@ document.querySelectorAll('.overlay').forEach(o => {
   o.addEventListener('mousedown', e => { mousedownOnOverlay = e.target === o; });
   o.addEventListener('mouseup',   e => { if (mousedownOnOverlay && e.target === o) o.classList.remove('open'); });
 });
+
 </script>
 </body>
 </html>
