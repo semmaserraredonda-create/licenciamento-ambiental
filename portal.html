@@ -1351,16 +1351,24 @@ async function gasGet(acao, params) {
   var url = new URL(GAS_URL);
   url.searchParams.set('acao', acao);
   if (params) Object.keys(params).forEach(function(k) { url.searchParams.set(k, params[k]); });
-  var r = await fetch(url.toString());
-  return r.json();
+  try {
+    var r = await fetch(url.toString(), { redirect: 'follow' });
+    var text = await r.text();
+    try { return JSON.parse(text); } catch(e) { return { erro: 'Resposta invalida: ' + text.slice(0,100) }; }
+  } catch(e) { return { erro: 'Falha de conexao: ' + e.message }; }
 }
+
 async function gasPost(acao, body) {
-  var r = await fetch(GAS_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify(Object.assign({ acao: acao }, body))
-  });
-  return r.json();
+  try {
+    var r = await fetch(GAS_URL, {
+      method: 'POST',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(Object.assign({ acao: acao }, body))
+    });
+    var text = await r.text();
+    try { return JSON.parse(text); } catch(e) { return { erro: 'Resposta invalida: ' + text.slice(0,100) }; }
+  } catch(e) { return { erro: 'Falha de conexao: ' + e.message }; }
 }
 
 // ── LOADING / TOAST ──
@@ -1394,6 +1402,8 @@ async function doLoginPortal() {
   err.style.display = 'none';
   if (!email || !senha) { err.textContent = 'Preencha e-mail e senha.'; err.style.display = 'block'; return; }
 
+  var btnText = document.querySelector('#form-entrar .btn-primary');
+  if (btnText) { btnText.textContent = 'Verificando...'; btnText.disabled = true; }
   showLoad('Verificando acesso...');
   try {
     var res = await gasPost('loginRequerente', { email: email, senha: senha });
@@ -1405,9 +1415,13 @@ async function doLoginPortal() {
       err.style.display = 'block';
     }
   } catch(e) {
-    err.textContent = 'Erro de conexão. Tente novamente.';
+    err.textContent = 'Erro de conexão com o servidor. Tente novamente.';
     err.style.display = 'block';
-  } finally { hideLoad(); }
+    console.error('Login erro:', e);
+  } finally {
+    hideLoad();
+    if (btnText) { btnText.textContent = 'Entrar'; btnText.disabled = false; }
+  }
 }
 
 async function doCadastro() {

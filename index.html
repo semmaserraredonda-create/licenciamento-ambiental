@@ -1114,9 +1114,17 @@ tbody td {
       </div>
 
       <div class="nav-section">Sistema</div>
+      <div class="nav-item" onclick="goTo('usuarios',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        Usuarios
+      </div>
+      <div class="nav-item" onclick="goTo('relatorios',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Relatorios
+      </div>
       <div class="nav-item" onclick="goTo('config',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-.71.71M4.93 4.93l.71.71M12 2v1M12 21v1M2 12h1M21 12h1M17.66 17.66l-.71-.71M6.34 17.66l.71-.71"/></svg>
-        Configurações
+        Configuracoes
       </div>
 
       <div class="sidebar-footer">
@@ -1293,12 +1301,212 @@ tbody td {
           </div>
         </div>
 
+        <!-- USUARIOS -->
+        <div class="screen" id="screen-usuarios">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+            <div>
+              <h2 style="font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--text)">Gestão de Usuários</h2>
+              <p style="font-size:12px;color:var(--text3);font-family:var(--font-mono)">Cadastre e gerencie os usuários do sistema</p>
+            </div>
+            <button class="btn btn-primary" onclick="openModalNovoUsuario()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Novo Usuário
+            </button>
+          </div>
+          <div class="card" style="padding:0">
+            <div style="overflow-x:auto">
+              <table>
+                <thead><tr>
+                  <th>Usuário</th><th>Nome</th><th>Perfil</th><th>Ações</th>
+                </tr></thead>
+                <tbody id="usuarios-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- RELATORIOS -->
+        <div class="screen" id="screen-relatorios">
+          <div style="margin-bottom:20px">
+            <h2 style="font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--text)">Relatórios</h2>
+            <p style="font-size:12px;color:var(--text3);font-family:var(--font-mono)">Exporte dados e gere relatórios do sistema</p>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+
+            <!-- Card 1: Exportar Processos CSV -->
+            <div class="card">
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+                <div style="width:40px;height:40px;background:var(--accent-bg);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" style="width:20px;height:20px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                </div>
+                <div>
+                  <div style="font-weight:600;color:var(--text);font-size:14px">Exportar Processos</div>
+                  <div style="font-size:11px;color:var(--text3)">Todos os processos em CSV</div>
+                </div>
+              </div>
+              <div class="grid2" style="margin-bottom:12px">
+                <div class="field">
+                  <label>Status</label>
+                  <select id="rel-status-proc">
+                    <option value="">Todos</option>
+                    <option>Aguardando Documentos</option>
+                    <option>Em Análise</option>
+                    <option>Exigência</option>
+                    <option>Aprovado</option>
+                    <option>Emitido</option>
+                    <option>Indeferido</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Modalidade</label>
+                  <select id="rel-tipo-proc">
+                    <option value="">Todas</option>
+                    <option>Dispensa</option><option>LAC</option><option>LS</option>
+                    <option>LP</option><option>LI</option><option>LO</option>
+                    <option>AA</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn btn-primary" style="width:100%" onclick="exportarProcessosCSV()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Baixar CSV
+              </button>
+            </div>
+
+            <!-- Card 2: Exportar Licenças CSV -->
+            <div class="card">
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+                <div style="width:40px;height:40px;background:var(--blue-bg);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" style="width:20px;height:20px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <div>
+                  <div style="font-weight:600;color:var(--text);font-size:14px">Exportar Licenças</div>
+                  <div style="font-size:11px;color:var(--text3)">Todas as licenças emitidas em CSV</div>
+                </div>
+              </div>
+              <div class="grid2" style="margin-bottom:12px">
+                <div class="field">
+                  <label>Ano</label>
+                  <select id="rel-ano-lic">
+                    <option value="">Todos</option>
+                    <option>2024</option><option>2025</option><option>2026</option><option>2027</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Modalidade</label>
+                  <select id="rel-tipo-lic">
+                    <option value="">Todas</option>
+                    <option>Dispensa</option><option>LAC</option><option>LS</option>
+                    <option>LP</option><option>LI</option><option>LO</option><option>AA</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn btn-primary" style="width:100%;background:var(--blue)" onclick="exportarLicencasCSV()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Baixar CSV
+              </button>
+            </div>
+
+            <!-- Card 3: Relatório Mensal PDF -->
+            <div class="card">
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+                <div style="width:40px;height:40px;background:var(--red-bg);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" style="width:20px;height:20px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                </div>
+                <div>
+                  <div style="font-weight:600;color:var(--text);font-size:14px">Relatório Mensal</div>
+                  <div style="font-size:11px;color:var(--text3)">Resumo em PDF por mês/ano</div>
+                </div>
+              </div>
+              <div class="grid2" style="margin-bottom:12px">
+                <div class="field">
+                  <label>Mês</label>
+                  <select id="rel-mes">
+                    <option value="1">Janeiro</option><option value="2">Fevereiro</option>
+                    <option value="3">Março</option><option value="4">Abril</option>
+                    <option value="5">Maio</option><option value="6">Junho</option>
+                    <option value="7">Julho</option><option value="8">Agosto</option>
+                    <option value="9">Setembro</option><option value="10">Outubro</option>
+                    <option value="11">Novembro</option><option value="12">Dezembro</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Ano</label>
+                  <select id="rel-ano">
+                    <option>2024</option><option selected>2026</option><option>2027</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn btn-primary" style="width:100%;background:var(--red)" onclick="gerarRelatorioMensalPDF()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Gerar PDF
+              </button>
+            </div>
+
+            <!-- Card 4: Estatísticas -->
+            <div class="card">
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+                <div style="width:40px;height:40px;background:var(--purple-bg);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2" style="width:20px;height:20px"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                </div>
+                <div>
+                  <div style="font-weight:600;color:var(--text);font-size:14px">Estatísticas</div>
+                  <div style="font-size:11px;color:var(--text3)">Resumo geral do sistema</div>
+                </div>
+              </div>
+              <div id="rel-stats" style="display:flex;flex-direction:column;gap:8px"></div>
+            </div>
+
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
 </div>
+<!-- MODAL USUARIO -->
+<div class="overlay" id="m-usuario">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div>
+        <h2 id="m-usuario-titulo">Novo Usuario</h2>
+        <p>Acesso ao sistema de licenciamento ambiental</p>
+      </div>
+      <button class="modal-close" onclick="closeModal('m-usuario')">x</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="usr-edit-idx" value="-1">
+      <div class="grid2">
+        <div class="field">
+          <label>Login (usuario) <span class="req">*</span></label>
+          <input id="usr-login" placeholder="ex: joao.silva" oninput="this.value=this.value.toLowerCase().replace(/\s/g,'')">
+        </div>
+        <div class="field">
+          <label>Senha <span class="req">*</span></label>
+          <input id="usr-senha" type="password" placeholder="Minimo 6 caracteres">
+        </div>
+        <div class="field span2">
+          <label>Nome Completo <span class="req">*</span></label>
+          <input id="usr-nome" placeholder="Nome do servidor" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+        </div>
+        <div class="field span2">
+          <label>Perfil de Acesso <span class="req">*</span></label>
+          <select id="usr-perfil">
+            <option value="Tecnico">Tecnico - Abre e atualiza processos</option>
+            <option value="Gestor">Gestor - Acesso completo e emite licencas</option>
+            <option value="Visualizador">Visualizador - Somente leitura</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('m-usuario')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarUsuario()">Salvar</button>
+    </div>
+  </div>
+</div>
 
-<!-- ════ MODAL: NOVO PROCESSO ════ -->
 <div class="overlay" id="m-novo">
   <div class="modal">
     <div class="modal-header">
@@ -1644,14 +1852,16 @@ function doLogout() {
 // ════════════════════════════════════════════
 
 function goTo(name, navEl) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
   document.getElementById('screen-' + name).classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
   if (navEl) navEl.classList.add('active');
-  const titles = { dashboard: 'Dashboard', processos: 'Processos', licencas: 'Licenças Emitidas', config: 'Configurações' };
+  var titles = { dashboard: 'Dashboard', processos: 'Processos', licencas: 'Licencas Emitidas', config: 'Configuracoes', usuarios: 'Gestao de Usuarios', relatorios: 'Relatorios' };
   document.getElementById('topbar-title').textContent = titles[name] || '';
-  if (name === 'processos') { STATE.page = 1; renderProcessos(); }
-  if (name === 'licencas') renderLicencas();
+  if (name === 'processos')  { STATE.page = 1; renderProcessos(); }
+  if (name === 'licencas')   renderLicencas();
+  if (name === 'usuarios')   renderUsuarios();
+  if (name === 'relatorios') renderRelatorios();
 }
 
 // ════════════════════════════════════════════
@@ -1666,7 +1876,7 @@ async function gasGET(acao, params = {}) {
   const url = new URL(STATE.gasUrl);
   url.searchParams.set('acao', acao);
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
-  const resp = await fetch(url.toString(), { method: 'GET' });
+  const resp = await fetch(url.toString(), { method: 'GET', redirect: 'follow' });
   const text = await resp.text();
   try { return JSON.parse(text); } catch(e) { throw new Error('Resposta inválida do GAS: ' + text.slice(0, 200)); }
 }
@@ -1674,7 +1884,8 @@ async function gasGET(acao, params = {}) {
 async function gasPOST(acao, body = {}) {
   const resp = await fetch(STATE.gasUrl, {
     method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
+    redirect: 'follow',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify({ acao, ...body }),
   });
   const text = await resp.text();
@@ -2083,6 +2294,10 @@ function openDetalhe(id) {
       Exportar Histórico
     </button>
     <button class="btn btn-ghost" onclick="closeModal('m-detalhe')">Fechar</button>
+    <button class="btn ${p.permitir_upload ? 'btn-amber' : 'btn-ghost'}" title="${p.permitir_upload ? 'Upload liberado — clique para revogar' : 'Liberar envio de documentos pelo cidadão'}" onclick="toggleUploadPermissao('${p.id}')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      ${p.permitir_upload ? 'Upload Liberado ✓' : 'Liberar Upload'}
+    </button>
     <button class="btn btn-amber" onclick="closeModal('m-detalhe');openStatus('${p.id}')">Atualizar Status</button>
     ${p.status === 'Aprovado' ? `<button class="btn btn-primary" onclick="emitirLicenca('${p.id}')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
@@ -2094,8 +2309,37 @@ function openDetalhe(id) {
 }
 
 // ════════════════════════════════════════════
-// STATUS
+// LIBERAR UPLOAD PARA O CIDADÃO
 // ════════════════════════════════════════════
+
+async function toggleUploadPermissao(id) {
+  const p = STATE.processos.find(x => x.id === id);
+  if (!p) return;
+
+  const novoValor = !p.permitir_upload;
+  p.permitir_upload = novoValor;
+
+  const hoje = new Date().toISOString().split('T')[0];
+  const texto = novoValor
+    ? `Upload de documentos liberado pelo técnico ${STATE.user.name}.`
+    : `Upload de documentos revogado pelo técnico ${STATE.user.name}.`;
+
+  p.hist = p.hist || [];
+  p.hist.push({ d: hoje, t: texto });
+
+  // Reatualiza o modal sem fechar
+  openDetalhe(id);
+  toast(novoValor ? 'Upload liberado para o cidadão.' : 'Upload revogado.', 'ok');
+
+  if (STATE.gasUrl) {
+    try {
+      await gasPOST('salvarProcesso', { dados: p });
+      await gasPOST('salvarHistorico', { proto: p.id, data: hoje, texto });
+    } catch(e) { console.warn('Falha ao sincronizar:', e); }
+  }
+}
+
+
 
 function openStatus(id) {
   STATE.activeId = id;
@@ -3101,6 +3345,373 @@ async function uploadDocumentoProcesso(input, proto) {
 
 async function adicionarDocProcesso() {}
 
+
+
+// ════════════════════════════════════════════
+// GESTAO DE USUARIOS
+// ════════════════════════════════════════════
+
+var USUARIOS_LOCAL = [
+  { u: 'admin',   p: 'admin123', nome: 'Administrador',     perfil: 'Gestor' },
+  { u: 'tecnico', p: 'tec123',   nome: 'Tecnico Ambiental', perfil: 'Tecnico' },
+];
+
+function renderUsuarios() {
+  var tbody = document.getElementById('usuarios-tbody');
+  if (!tbody) return;
+  var lista = USUARIOS_LOCAL;
+  if (!lista.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:24px">Nenhum usuario cadastrado.</td></tr>';
+    return;
+  }
+  var perfilCor = { Gestor: 'var(--accent)', Tecnico: 'var(--blue)', Visualizador: 'var(--purple)' };
+  tbody.innerHTML = lista.map(function(u, i) {
+    return '<tr>' +
+      '<td style="font-family:var(--font-mono);font-size:12px;white-space:nowrap">' + u.u + '</td>' +
+      '<td style="font-weight:500">' + u.nome + '</td>' +
+      '<td><span style="background:var(--bg3);border:1px solid var(--border2);color:' + (perfilCor[u.perfil]||'var(--text2)') + ';padding:3px 10px;border-radius:99px;font-size:11px;font-family:var(--font-mono)">' + u.perfil + '</span></td>' +
+      '<td><div class="actions-row">' +
+        '<button class="icon-btn" title="Editar" onclick="editarUsuario(' + i + ')">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>' +
+        '</button>' +
+        (u.u !== 'admin' ? '<button class="icon-btn" title="Remover" onclick="removerUsuario(' + i + ')" style="color:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button>' : '') +
+      '</div></td>' +
+    '</tr>';
+  }).join('');
+}
+
+function openModalNovoUsuario() {
+  document.getElementById('m-usuario-titulo').textContent = 'Novo Usuario';
+  document.getElementById('usr-login').value  = '';
+  document.getElementById('usr-senha').value  = '';
+  document.getElementById('usr-nome').value   = '';
+  document.getElementById('usr-perfil').value = 'Tecnico';
+  document.getElementById('usr-edit-idx').value = '-1';
+  document.getElementById('usr-login').removeAttribute('disabled');
+  openModal('m-usuario');
+}
+
+function editarUsuario(idx) {
+  var u = USUARIOS_LOCAL[idx];
+  if (!u) return;
+  document.getElementById('m-usuario-titulo').textContent = 'Editar Usuario';
+  document.getElementById('usr-login').value  = u.u;
+  document.getElementById('usr-senha').value  = u.p;
+  document.getElementById('usr-nome').value   = u.nome;
+  document.getElementById('usr-perfil').value = u.perfil;
+  document.getElementById('usr-edit-idx').value = idx;
+  document.getElementById('usr-login').setAttribute('disabled', 'true');
+  openModal('m-usuario');
+}
+
+async function salvarUsuario() {
+  var login  = document.getElementById('usr-login').value.trim().toLowerCase();
+  var senha  = document.getElementById('usr-senha').value.trim();
+  var nome   = document.getElementById('usr-nome').value.trim();
+  var perfil = document.getElementById('usr-perfil').value;
+  var editIdx = parseInt(document.getElementById('usr-edit-idx').value);
+
+  if (!login) { toast('Preencha o login.', 'err'); return; }
+  if (editIdx < 0 && !senha) { toast('Preencha a senha.', 'err'); return; }
+  if (senha && senha.length < 6) { toast('Senha deve ter no minimo 6 caracteres.', 'err'); return; }
+  if (!nome) { toast('Preencha o nome.', 'err'); return; }
+
+  if (editIdx >= 0) {
+    USUARIOS_LOCAL[editIdx].nome   = nome;
+    USUARIOS_LOCAL[editIdx].perfil = perfil;
+    if (senha) USUARIOS_LOCAL[editIdx].p = senha;
+  } else {
+    if (USUARIOS_LOCAL.find(function(x) { return x.u === login; })) {
+      toast('Login ja existe. Escolha outro.', 'err'); return;
+    }
+    USUARIOS_LOCAL.push({ u: login, p: senha, nome: nome, perfil: perfil });
+  }
+
+  // Sincroniza com GAS
+  if (STATE.gasUrl) {
+    try {
+      await gasPOST('salvarUsuario', { usuario: login, senha: senha || USUARIOS_LOCAL[editIdx].p, nome: nome, perfil: perfil });
+    } catch(e) { console.warn('GAS: nao foi possivel sincronizar usuario:', e); }
+  }
+
+  closeModal('m-usuario');
+  renderUsuarios();
+  toast(editIdx >= 0 ? 'Usuario atualizado!' : 'Usuario criado!', 'ok');
+}
+
+function removerUsuario(idx) {
+  var u = USUARIOS_LOCAL[idx];
+  if (!u) return;
+  if (u.u === 'admin') { toast('O usuario admin nao pode ser removido.', 'err'); return; }
+  if (!confirm('Remover o usuario "' + u.u + '"? Esta acao nao pode ser desfeita.')) return;
+  USUARIOS_LOCAL.splice(idx, 1);
+  renderUsuarios();
+  toast('Usuario removido.', 'ok');
+}
+
+// ════════════════════════════════════════════
+// RELATORIOS E EXPORTACAO
+// ════════════════════════════════════════════
+
+function renderRelatorios() {
+  var p = STATE.processos;
+  var l = STATE.licencas;
+  var stats = document.getElementById('rel-stats');
+  if (!stats) return;
+
+  var porStatus = {};
+  p.forEach(function(x) { porStatus[x.status] = (porStatus[x.status]||0) + 1; });
+  var porTipo = {};
+  l.forEach(function(x) { porTipo[x.tipo] = (porTipo[x.tipo]||0) + 1; });
+
+  var hoje = new Date();
+  var vencendo = l.filter(function(x) {
+    if (!x.validade) return false;
+    var d = new Date(x.validade);
+    var diff = (d - hoje) / (1000 * 60 * 60 * 24);
+    return diff >= 0 && diff <= 120;
+  }).length;
+
+  var vencidas = l.filter(function(x) {
+    if (!x.validade) return false;
+    return new Date(x.validade) < hoje;
+  }).length;
+
+  var itens = [
+    { label: 'Total de Processos', valor: p.length, cor: 'var(--accent)' },
+    { label: 'Licencas Emitidas', valor: l.length, cor: 'var(--blue)' },
+    { label: 'Vencendo em 120 dias', valor: vencendo, cor: 'var(--amber)' },
+    { label: 'Licencas Vencidas', valor: vencidas, cor: 'var(--red)' },
+    { label: 'Em Analise', valor: porStatus['Em Analise'] || porStatus['Em Análise'] || 0, cor: 'var(--cyan)' },
+    { label: 'Com Exigencia', valor: porStatus['Exigência'] || porStatus['Exigencia'] || 0, cor: 'var(--orange)' },
+  ];
+
+  stats.innerHTML = itens.map(function(item) {
+    return '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">' +
+      '<span style="font-size:13px;color:var(--text2)">' + item.label + '</span>' +
+      '<span style="font-family:var(--font-num,\'Inter\',sans-serif);font-weight:700;font-size:16px;color:' + item.cor + '">' + item.valor + '</span>' +
+      '</div>';
+  }).join('');
+
+  // Seta ano atual no select
+  var selAno = document.getElementById('rel-ano');
+  if (selAno) selAno.value = String(new Date().getFullYear());
+  var selMes = document.getElementById('rel-mes');
+  if (selMes) selMes.value = String(new Date().getMonth() + 1);
+}
+
+function exportarProcessosCSV() {
+  var statusFiltro = document.getElementById('rel-status-proc').value;
+  var tipoFiltro   = document.getElementById('rel-tipo-proc').value;
+
+  var lista = STATE.processos.filter(function(p) {
+    return (!statusFiltro || p.status === statusFiltro) &&
+           (!tipoFiltro   || p.tipo   === tipoFiltro);
+  });
+
+  if (!lista.length) { toast('Nenhum processo encontrado com os filtros selecionados.', 'err'); return; }
+
+  var cabecalho = ['Protocolo','Requerente','CPF/CNPJ','Modalidade','Atividade','Endereco','Status','Abertura'];
+  var linhas = [cabecalho.join(';')];
+
+  lista.forEach(function(p) {
+    linhas.push([
+      p.id, p.req, p.doc, p.tipo, p.ativ,
+      (p.end || '').replace(/;/g, ','),
+      p.status,
+      fmtDate(p.data),
+    ].map(function(v) { return '"' + String(v||'').replace(/"/g, '""') + '"'; }).join(';'));
+  });
+
+  var csv = '\uFEFF' + linhas.join('\n'); // BOM para Excel
+  baixarArquivo(csv, 'processos-licenciamento.csv', 'text/csv;charset=utf-8');
+  toast(lista.length + ' processos exportados!', 'ok');
+}
+
+function exportarLicencasCSV() {
+  var anoFiltro  = document.getElementById('rel-ano-lic').value;
+  var tipoFiltro = document.getElementById('rel-tipo-lic').value;
+
+  var lista = STATE.licencas.filter(function(l) {
+    return (!anoFiltro  || String(l.emissao||'').startsWith(anoFiltro)) &&
+           (!tipoFiltro || l.tipo === tipoFiltro);
+  });
+
+  if (!lista.length) { toast('Nenhuma licenca encontrada com os filtros selecionados.', 'err'); return; }
+
+  var cabecalho = ['Numero','Protocolo','Requerente','Modalidade','Emissao','Validade'];
+  var linhas = [cabecalho.join(';')];
+
+  lista.forEach(function(l) {
+    linhas.push([
+      l.num, l.proto, l.req, l.tipo,
+      fmtDate(l.emissao), fmtDate(l.validade),
+    ].map(function(v) { return '"' + String(v||'').replace(/"/g, '""') + '"'; }).join(';'));
+  });
+
+  var csv = '\uFEFF' + linhas.join('\n');
+  baixarArquivo(csv, 'licencas-emitidas.csv', 'text/csv;charset=utf-8');
+  toast(lista.length + ' licencas exportadas!', 'ok');
+}
+
+async function gerarRelatorioMensalPDF() {
+  var mes = parseInt(document.getElementById('rel-mes').value);
+  var ano = parseInt(document.getElementById('rel-ano').value);
+  var mesesNomes = ['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  var mesNome = mesesNomes[mes - 1];
+
+  if (!window.jspdf) {
+    await new Promise(function(resolve, reject) {
+      var s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+      s.onload = resolve; s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  var { jsPDF } = window.jspdf;
+  var doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  var W = 210, ML = 18, MR = 18;
+  var y = 18;
+
+  // Brasao
+  var brasaoEl = document.getElementById('brasao-oficial');
+  if (brasaoEl) {
+    try {
+      var img = new Image();
+      img.src = brasaoEl.src;
+      await new Promise(function(r) { img.onload = r; img.onerror = r; });
+      var cv = document.createElement('canvas');
+      cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+      cv.getContext('2d').drawImage(img, 0, 0);
+      doc.addImage(cv.toDataURL('image/png'), 'PNG', ML, y, 18, 18);
+    } catch(e) {}
+  }
+
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(20,20,20);
+  doc.text('SECRETARIA MUNICIPAL DE MEIO AMBIENTE - SERRA REDONDA/PB', W/2, y + 5, { align: 'center' });
+  doc.setFontSize(12);
+  doc.text('RELATORIO MENSAL DE LICENCIAMENTO AMBIENTAL', W/2, y + 11, { align: 'center' });
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(80,80,80);
+  doc.text(mesNome + ' de ' + ano, W/2, y + 17, { align: 'center' });
+
+  y += 24;
+  doc.setDrawColor(20,20,20); doc.setLineWidth(0.6);
+  doc.line(ML, y, W - MR, y);
+  y += 8;
+
+  // Filtrar dados do mes/ano
+  var procMes = STATE.processos.filter(function(p) {
+    if (!p.data) return false;
+    var d = new Date(p.data);
+    return d.getFullYear() === ano && (d.getMonth() + 1) === mes;
+  });
+  var licMes = STATE.licencas.filter(function(l) {
+    if (!l.emissao) return false;
+    var d = new Date(l.emissao);
+    return d.getFullYear() === ano && (d.getMonth() + 1) === mes;
+  });
+
+  // Resumo
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(20,20,20);
+  doc.text('RESUMO DO PERIODO', ML, y); y += 6;
+
+  var resumo = [
+    ['Processos abertos no mes', String(procMes.length)],
+    ['Licencas emitidas no mes', String(licMes.length)],
+    ['Total geral de processos', String(STATE.processos.length)],
+    ['Total geral de licencas', String(STATE.licencas.length)],
+  ];
+
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setLineWidth(0.2); doc.setDrawColor(180,180,180);
+  resumo.forEach(function(r, i) {
+    if (i % 2 === 0) { doc.setFillColor(245,245,245); doc.rect(ML, y-1, W-ML-MR, 7, 'F'); }
+    doc.setTextColor(60,60,60); doc.text(r[0], ML + 3, y + 4);
+    doc.setFont('helvetica', 'bold'); doc.setTextColor(20,20,20);
+    doc.text(r[1], W - MR - 3, y + 4, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    y += 7;
+  });
+
+  y += 6;
+
+  // Processos abertos no mes
+  if (procMes.length > 0) {
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(20,20,20);
+    doc.text('PROCESSOS ABERTOS EM ' + mesNome.toUpperCase() + '/' + ano, ML, y); y += 4;
+    doc.setFillColor(220,220,220);
+    doc.rect(ML, y, W-ML-MR, 7, 'F');
+    doc.setFontSize(8); doc.setTextColor(20,20,20);
+    doc.text('PROTOCOLO', ML+2, y+5);
+    doc.text('REQUERENTE', ML+40, y+5);
+    doc.text('MODALIDADE', ML+100, y+5);
+    doc.text('STATUS', ML+130, y+5);
+    y += 7;
+    doc.setFont('helvetica', 'normal'); doc.setLineWidth(0.15);
+    procMes.forEach(function(p, i) {
+      if (y > 270) { doc.addPage(); y = 18; }
+      if (i % 2 === 0) { doc.setFillColor(250,250,250); doc.rect(ML, y, W-ML-MR, 6, 'F'); }
+      doc.setFontSize(7.5); doc.setTextColor(30,30,30);
+      doc.text(String(p.id||'').slice(0,18), ML+2, y+4);
+      doc.text(String(p.req||'').slice(0,22), ML+40, y+4);
+      doc.text(String(p.tipo||''), ML+100, y+4);
+      doc.text(String(p.status||'').slice(0,16), ML+130, y+4);
+      doc.line(ML, y+6, W-MR, y+6);
+      y += 6;
+    });
+    y += 6;
+  }
+
+  // Licencas emitidas no mes
+  if (licMes.length > 0) {
+    if (y > 240) { doc.addPage(); y = 18; }
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(20,20,20);
+    doc.text('LICENCAS EMITIDAS EM ' + mesNome.toUpperCase() + '/' + ano, ML, y); y += 4;
+    doc.setFillColor(220,220,220);
+    doc.rect(ML, y, W-ML-MR, 7, 'F');
+    doc.setFontSize(8);
+    doc.text('NUMERO', ML+2, y+5);
+    doc.text('REQUERENTE', ML+35, y+5);
+    doc.text('MODALIDADE', ML+100, y+5);
+    doc.text('VALIDADE', ML+138, y+5);
+    y += 7;
+    doc.setFont('helvetica', 'normal');
+    licMes.forEach(function(l, i) {
+      if (y > 270) { doc.addPage(); y = 18; }
+      if (i % 2 === 0) { doc.setFillColor(250,250,250); doc.rect(ML, y, W-ML-MR, 6, 'F'); }
+      doc.setFontSize(7.5); doc.setTextColor(30,30,30);
+      doc.text(String(l.num||''), ML+2, y+4);
+      doc.text(String(l.req||'').slice(0,24), ML+35, y+4);
+      doc.text(String(l.tipo||''), ML+100, y+4);
+      doc.text(fmtDate(l.validade), ML+138, y+4);
+      doc.line(ML, y+6, W-MR, y+6);
+      y += 6;
+    });
+  }
+
+  // Rodape
+  var dataHoje = new Date();
+  var dataStr = String(dataHoje.getDate()).padStart(2,'0') + '/' + String(dataHoje.getMonth()+1).padStart(2,'0') + '/' + dataHoje.getFullYear();
+  doc.setLineWidth(0.5); doc.setDrawColor(20,20,20);
+  doc.line(ML, 284, W-MR, 284);
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(100,100,100);
+  doc.text('SEMMA Serra Redonda/PB  |  Lei Complementar no 005/2025  |  Gerado em ' + dataStr, W/2, 289, { align: 'center' });
+
+  var nomeArq = 'Relatorio-' + mesNome + '-' + ano + '.pdf';
+  doc.save(nomeArq);
+  toast('Relatorio gerado: ' + nomeArq, 'ok');
+}
+
+function baixarArquivo(conteudo, nome, tipo) {
+  var blob = new Blob([conteudo], { type: tipo });
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href   = url;
+  a.download = nome;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function() { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+}
 
 // Fechar overlay APENAS quando o clique começa E termina no overlay (não ao arrastar)
 document.querySelectorAll('.overlay').forEach(o => {
