@@ -617,6 +617,50 @@ body { font-family: var(--ff-body); background: var(--bg); color: var(--text); m
   .span2 { grid-column: span 1; }
   .portal-nav { overflow-x: auto; }
 }
+
+/* ── STEPPER ── */
+.step-item { display:flex; flex-direction:column; align-items:center; gap:6px; flex-shrink:0; }
+.step-circle { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; background:var(--bg); color:var(--text3); border:2px solid var(--border2); transition:all 0.2s; }
+.step-item.active .step-circle { background:var(--verde); color:#fff; border-color:var(--verde); }
+.step-item.done .step-circle { background:var(--verde2); color:#fff; border-color:var(--verde2); }
+.step-label { font-size:11px; font-weight:500; color:var(--text3); white-space:nowrap; }
+.step-item.active .step-label { color:var(--verde); font-weight:600; }
+.step-item.done .step-label { color:var(--verde2); }
+.step-line { flex:1; height:2px; background:var(--border2); align-self:flex-start; margin-top:15px; }
+.step-line.done { background:var(--verde2); }
+
+/* ── EMP OPTION ── */
+.emp-option { display:flex; align-items:center; gap:12px; padding:14px 16px; border:1.5px solid var(--border); border-radius:var(--radius); cursor:pointer; transition:all 0.15s; }
+.emp-option:hover { border-color:var(--verde2); background:var(--verde-lt); }
+.emp-option.selected { border-color:var(--verde); background:var(--verde-lt); }
+.emp-option-radio { width:18px; height:18px; border-radius:50%; border:2px solid var(--border2); flex-shrink:0; transition:all 0.15s; }
+.emp-option.selected .emp-option-radio { border-color:var(--verde); background:var(--verde); box-shadow:inset 0 0 0 3px #fff; }
+.emp-option-nome { font-size:14px; font-weight:600; color:var(--text); }
+.emp-option-doc  { font-size:12px; color:var(--text3); font-family:var(--ff-mono); }
+.emp-option-ativ { font-size:12px; color:var(--text2); }
+
+/* ── MODAL ATIVIDADES ── */
+.ativ-cat { border:1px solid var(--border); border-radius:var(--radius); margin-bottom:8px; overflow:hidden; }
+.ativ-cat-header { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; cursor:pointer; background:var(--bg); font-size:13px; font-weight:600; color:var(--text); }
+.ativ-cat-header:hover { background:var(--verde-lt); }
+.ativ-cat-header svg { transition:transform 0.2s; flex-shrink:0; }
+.ativ-cat.open .ativ-cat-header svg { transform:rotate(180deg); }
+.ativ-cat-body { display:none; padding:4px 0; }
+.ativ-cat.open .ativ-cat-body { display:block; }
+.ativ-item { padding:10px 16px; font-size:13px; color:var(--text2); cursor:pointer; transition:background 0.1s; }
+.ativ-item:hover { background:var(--verde-lt); color:var(--verde); }
+
+/* ── UPLOAD LIST WIZARD ── */
+.doc-pendente { display:flex; align-items:center; gap:10px; padding:8px 12px; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius); margin-top:6px; }
+.doc-pendente-nome { flex:1; font-size:12px; color:var(--text); font-family:var(--ff-mono); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.doc-pendente-rem { background:none; border:none; cursor:pointer; color:var(--text3); padding:2px 6px; border-radius:4px; font-size:18px; line-height:1; }
+.doc-pendente-rem:hover { background:var(--red-bg); color:var(--red); }
+
+/* ── RESUMO ── */
+.resumo-item { display:flex; flex-direction:column; gap:2px; padding:10px 0; border-bottom:1px solid var(--border); }
+.resumo-item:last-child { border-bottom:none; }
+.resumo-item label { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--text3); }
+.resumo-item span { font-size:14px; color:var(--text); }
 </style>
 </head>
 <body>
@@ -770,13 +814,102 @@ body { font-family: var(--ff-body); background: var(--bg); color: var(--text); m
 
   <div class="portal-content">
 
-    <!-- MEUS PROCESSOS -->
+    <!-- DASHBOARD / MEUS PROCESSOS -->
     <div class="screen active" id="pscreen-processos">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-        <h2 style="font-family:var(--ff-display);font-size:22px;font-weight:700">Meus Processos</h2>
-        <button class="btn btn-primary btn-sm" onclick="goPortal('novo',document.getElementById('ntab-novo'))">+ Novo Requerimento</button>
+
+      <!-- Saudação -->
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+        <div>
+          <h2 style="font-family:var(--ff-display);font-size:24px;font-weight:700;color:var(--text)" id="dash-saudacao">Boa tarde!</h2>
+          <p style="font-size:14px;color:var(--text2);margin-top:2px">Você está no Portal do Cidadão — SEMMA Serra Redonda/PB</p>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-ghost" onclick="goPortal('licencas',document.getElementById('ntab-licencas'))">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Visualizar Licenças
+          </button>
+          <button class="btn btn-primary" onclick="iniciarSolicitacao()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:15px;height:15px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Solicitar Licenciamento
+          </button>
+        </div>
       </div>
-      <div id="lista-processos"><div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg><p>Nenhum processo encontrado</p><small>Clique em "Novo Requerimento" para iniciar</small></div></div>
+
+      <!-- Métricas -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px">
+        <div class="card" style="padding:18px 20px;display:flex;align-items:center;gap:14px">
+          <div style="width:44px;height:44px;background:var(--verde-lt);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--verde)" stroke-width="2" style="width:22px;height:22px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <div>
+            <div style="font-family:var(--ff-mono);font-size:26px;font-weight:700;color:var(--verde);line-height:1" id="dash-total">0</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:2px">Processos</div>
+          </div>
+        </div>
+        <div class="card" style="padding:18px 20px;display:flex;align-items:center;gap:14px">
+          <div style="width:44px;height:44px;background:var(--blue-bg);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" style="width:22px;height:22px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div>
+            <div style="font-family:var(--ff-mono);font-size:26px;font-weight:700;color:var(--blue);line-height:1" id="dash-analise">0</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:2px">Em Análise</div>
+          </div>
+        </div>
+        <div class="card" style="padding:18px 20px;display:flex;align-items:center;gap:14px">
+          <div style="width:44px;height:44px;background:var(--amber-bg);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" style="width:22px;height:22px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <div>
+            <div style="font-family:var(--ff-mono);font-size:26px;font-weight:700;color:var(--amber);line-height:1" id="dash-exigencia">0</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:2px">Com Exigência</div>
+          </div>
+        </div>
+        <div class="card" style="padding:18px 20px;display:flex;align-items:center;gap:14px">
+          <div style="width:44px;height:44px;background:#dcfce7;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#14532d" stroke-width="2" style="width:22px;height:22px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div>
+            <div style="font-family:var(--ff-mono);font-size:26px;font-weight:700;color:#14532d;line-height:1" id="dash-licencas-count">0</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:2px">Licenças Emitidas</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Atalhos rápidos -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:24px">
+        <div class="card" style="padding:20px;text-align:center;cursor:pointer;transition:all 0.15s" onclick="iniciarSolicitacao()" onmouseenter="this.style.borderColor='var(--verde)'" onmouseleave="this.style.borderColor=''">
+          <div style="width:40px;height:40px;background:var(--verde-lt);border-radius:10px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--verde)" stroke-width="2" style="width:20px;height:20px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          </div>
+          <div style="font-size:13px;font-weight:600;color:var(--text)">Solicitações</div>
+        </div>
+        <div class="card" style="padding:20px;text-align:center;cursor:pointer;transition:all 0.15s" onclick="goPortal('processos',document.getElementById('ntab-processos'));document.getElementById('lista-processos-section').scrollIntoView({behavior:'smooth'})" onmouseenter="this.style.borderColor='var(--verde)'" onmouseleave="this.style.borderColor=''">
+          <div style="width:40px;height:40px;background:var(--blue-bg);border-radius:10px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" style="width:20px;height:20px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg>
+          </div>
+          <div style="font-size:13px;font-weight:600;color:var(--text)">Processos</div>
+        </div>
+        <div class="card" style="padding:20px;text-align:center;cursor:pointer;transition:all 0.15s" onclick="goPortal('licencas',document.getElementById('ntab-licencas'))" onmouseenter="this.style.borderColor='var(--verde)'" onmouseleave="this.style.borderColor=''">
+          <div style="width:40px;height:40px;background:#dcfce7;border-radius:10px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#14532d" stroke-width="2" style="width:20px;height:20px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div style="font-size:13px;font-weight:600;color:var(--text)">Licenças</div>
+        </div>
+        <div class="card" style="padding:20px;text-align:center;cursor:pointer;transition:all 0.15s" onclick="goPortal('perfil',document.getElementById('ntab-perfil'))" onmouseenter="this.style.borderColor='var(--verde)'" onmouseleave="this.style.borderColor=''">
+          <div style="width:40px;height:40px;background:var(--amber-bg);border-radius:10px;display:flex;align-items:center;justify-content:center;margin:0 auto 10px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2" style="width:20px;height:20px"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div style="font-size:13px;font-weight:600;color:var(--text)">Empreendimentos</div>
+        </div>
+      </div>
+
+      <!-- Lista de processos -->
+      <div id="lista-processos-section">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <h3 style="font-size:15px;font-weight:600;color:var(--text)">Últimas movimentações</h3>
+        </div>
+        <div id="lista-processos"></div>
+      </div>
     </div>
 
     <!-- DETALHE PROCESSO -->
@@ -788,17 +921,65 @@ body { font-family: var(--ff-body); background: var(--bg); color: var(--text); m
       <div id="detalhe-content"></div>
     </div>
 
-    <!-- NOVO REQUERIMENTO -->
+    <!-- NOVO REQUERIMENTO — WIZARD EM ETAPAS -->
     <div class="screen" id="pscreen-novo">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Novo Requerimento</div>
-        </div>
-        <div class="erro-msg" id="novo-erro"></div>
 
-        <div class="form-section">Atividade</div>
-        <div class="grid2">
-          <div class="field span2">
+      <!-- Stepper -->
+      <div style="display:flex;align-items:center;gap:0;margin-bottom:32px;background:#fff;border:1px solid var(--border);border-radius:var(--radius2);padding:20px 28px;box-shadow:var(--shadow)">
+        <div class="step-item active" id="step-ind-1">
+          <div class="step-circle" id="step-circ-1">1</div>
+          <div class="step-label">Empreendimento</div>
+        </div>
+        <div class="step-line" id="step-line-1"></div>
+        <div class="step-item" id="step-ind-2">
+          <div class="step-circle" id="step-circ-2">2</div>
+          <div class="step-label">Atividade</div>
+        </div>
+        <div class="step-line" id="step-line-2"></div>
+        <div class="step-item" id="step-ind-3">
+          <div class="step-circle" id="step-circ-3">3</div>
+          <div class="step-label">Documentos</div>
+        </div>
+        <div class="step-line" id="step-line-3"></div>
+        <div class="step-item" id="step-ind-4">
+          <div class="step-circle" id="step-circ-4">4</div>
+          <div class="step-label">Finalizar</div>
+        </div>
+      </div>
+
+      <!-- ETAPA 1 — Empreendimento -->
+      <div id="step-1" class="step-content">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Selecione o Empreendimento</div>
+          </div>
+          <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Caso o empreendimento ainda não tenha sido cadastrado, escolha a opção "Novo Empreendimento".</p>
+          <div style="display:flex;gap:10px;margin-bottom:16px">
+            <div style="flex:1;position:relative">
+              <input id="emp-busca" placeholder="Nome do empreendimento" oninput="filtrarEmpreendimentos()" style="width:100%;padding-right:40px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" style="width:16px;height:16px;position:absolute;right:12px;top:50%;transform:translateY(-50%)"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            </div>
+            <button class="btn btn-primary" onclick="novoEmpreendimento()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Novo Empreendimento
+            </button>
+          </div>
+          <div id="lista-empreendimentos" style="display:flex;flex-direction:column;gap:10px;margin-bottom:8px"></div>
+          <div id="emp-vazio" style="display:none;text-align:center;padding:24px;color:var(--text3)">
+            <p style="font-size:13px">Nenhum empreendimento cadastrado.</p>
+            <p style="font-size:12px">Clique em "Novo Empreendimento" para cadastrar.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ETAPA 2 — Atividade -->
+      <div id="step-2" class="step-content" style="display:none">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Atividade Licenciada</div>
+          </div>
+          <div class="erro-msg" id="err-step2"></div>
+          <div class="field">
             <label>Modalidade de Licença *</label>
             <select id="novo-tipo">
               <option value="">Selecione a modalidade...</option>
@@ -816,63 +997,116 @@ body { font-family: var(--ff-body); background: var(--bg); color: var(--text); m
               <option value="AA">AA — Autorização Ambiental</option>
             </select>
           </div>
-          <div class="field span2">
-            <label>Descrição da Atividade / Empreendimento *</label>
-            <input id="novo-ativ" placeholder="EX: AVICULTURA CONVENCIONAL — 500 AVES" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
-          </div>
-        </div>
-
-        <div class="form-section">Localização</div>
-        <div class="grid2">
           <div class="field">
-            <label>CEP</label>
+            <label>Atividade Principal *</label>
             <div style="display:flex;gap:8px">
-              <input id="novo-cep" placeholder="00000-000" oninput="mascaraCepPortal(this)" maxlength="9" style="flex:1">
-              <button class="btn btn-ghost btn-sm" onclick="buscarCepPortal()">Buscar</button>
+              <input id="novo-ativ" placeholder="Clique em Selecionar para escolher..." readonly style="flex:1;background:var(--bg);cursor:pointer" onclick="abrirModalAtiv('novo-ativ')">
+              <button class="btn btn-ghost btn-sm" type="button" onclick="abrirModalAtiv('novo-ativ')">Selecionar</button>
             </div>
           </div>
           <div class="field">
-            <label>Logradouro *</label>
-            <input id="novo-logradouro" placeholder="RUA, AVENIDA..." style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+            <label>Observações adicionais</label>
+            <textarea id="novo-obs" placeholder="Descreva detalhes relevantes sobre o empreendimento..." rows="3"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ETAPA 3 — Documentos -->
+      <div id="step-3" class="step-content" style="display:none">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Documentos</div>
+          </div>
+          <div class="erro-msg" id="err-step3"></div>
+          <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Anexe os documentos necessários para análise. Você também poderá enviar arquivos após a abertura do processo.</p>
+          <label class="upload-area" for="docs-input-wizard" style="cursor:pointer;display:block">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--verde)" stroke-width="2" style="width:32px;height:32px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <p>Arraste arquivos aqui ou clique para selecionar</p>
+            <small>PDF, Word, Excel, imagens — até 10 MB por arquivo</small>
+            <input type="file" id="docs-input-wizard" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx" style="display:none" onchange="adicionarDocsWizard(this)">
+          </label>
+          <div id="docs-lista-wizard" style="margin-top:10px"></div>
+        </div>
+      </div>
+
+      <!-- ETAPA 4 — Finalizar (resumo) -->
+      <div id="step-4" class="step-content" style="display:none">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Confirmar Requerimento</div>
+          </div>
+          <div class="erro-msg" id="err-step4"></div>
+          <div id="resumo-requerimento" style="display:flex;flex-direction:column;gap:14px"></div>
+        </div>
+      </div>
+
+      <!-- Botões de navegação -->
+      <div style="display:flex;justify-content:space-between;margin-top:16px">
+        <button class="btn btn-ghost" id="btn-voltar-step" onclick="stepAnterior()" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="15 18 9 12 15 6"/></svg>
+          Voltar
+        </button>
+        <button class="btn btn-ghost" onclick="cancelarSolicitacao()" id="btn-cancelar-step">Cancelar</button>
+        <button class="btn btn-primary" id="btn-avancar-step" onclick="stepAvancar()">
+          Avançar
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- MODAL: Novo Empreendimento -->
+    <div id="modal-emp" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:999;align-items:center;justify-content:center">
+      <div style="background:#fff;border-radius:var(--radius2);padding:28px;width:100%;max-width:480px;margin:20px;box-shadow:var(--shadow2)">
+        <h3 style="font-family:var(--ff-display);font-size:18px;font-weight:700;margin-bottom:16px">Novo Empreendimento</h3>
+        <div class="field">
+          <label>Nome / Razão Social *</label>
+          <input id="emp-nome" placeholder="NOME DO EMPREENDIMENTO" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+        </div>
+        <div class="grid2">
+          <div class="field">
+            <label>CPF / CNPJ *</label>
+            <input id="emp-doc" placeholder="000.000.000-00" oninput="mascaraDocPortal(this)" maxlength="18">
           </div>
           <div class="field">
-            <label>Número *</label>
-            <input id="novo-numero" placeholder="Nº ou S/N" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+            <label>Atividade Principal</label>
+            <div style="display:flex;gap:8px">
+              <input id="emp-ativ" placeholder="Selecione a atividade..." readonly style="flex:1;background:var(--bg);cursor:pointer" onclick="abrirModalAtiv('emp-ativ')">
+              <button class="btn btn-ghost btn-sm" type="button" onclick="abrirModalAtiv('emp-ativ')">Selecionar</button>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label>CEP</label>
+          <div style="display:flex;gap:8px">
+            <input id="emp-cep" placeholder="00000-000" oninput="mascaraCepPortal(this)" maxlength="9" style="flex:1">
+            <button class="btn btn-ghost btn-sm" type="button" onclick="buscarCepEmp()">Buscar</button>
+          </div>
+        </div>
+        <div class="grid2">
+          <div class="field" style="grid-column:span 2">
+            <label>Logradouro</label>
+            <input id="emp-logradouro" placeholder="RUA, AVENIDA..." style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
           </div>
           <div class="field">
-            <label>Bairro *</label>
-            <input id="novo-bairro" placeholder="BAIRRO" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+            <label>Número</label>
+            <input id="emp-numero" placeholder="Nº ou S/N" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+          </div>
+          <div class="field">
+            <label>Bairro</label>
+            <input id="emp-bairro" placeholder="BAIRRO" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
           </div>
           <div class="field">
             <label>Cidade</label>
-            <input id="novo-cidade" value="Serra Redonda" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+            <input id="emp-cidade" value="Serra Redonda" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
           </div>
           <div class="field">
             <label>UF</label>
-            <input id="novo-uf" value="PB" maxlength="2" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
-          </div>
-          <div class="field">
-            <label>Latitude</label>
-            <input id="novo-lat" placeholder="-7.187778" onblur="fmtCoordPortal(this,true)">
-          </div>
-          <div class="field">
-            <label>Longitude</label>
-            <input id="novo-lon" placeholder="-35.678056" onblur="fmtCoordPortal(this,false)">
+            <input id="emp-uf" value="PB" maxlength="2" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
           </div>
         </div>
-
-        <div class="form-section">Observações</div>
-        <div class="field">
-          <label>Informações adicionais (opcional)</label>
-          <textarea id="novo-obs" placeholder="Descreva detalhes relevantes sobre o empreendimento..." rows="3"></textarea>
-        </div>
-
-        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px">
-          <button class="btn btn-ghost" onclick="goPortal('processos',document.getElementById('ntab-processos'))">Cancelar</button>
-          <button class="btn btn-primary" onclick="submeterRequerimento()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><polyline points="20 6 9 17 4 12"/></svg>
-            Enviar Requerimento
-          </button>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px">
+          <button class="btn btn-ghost" onclick="fecharModalEmp()">Cancelar</button>
+          <button class="btn btn-primary" onclick="salvarEmpreendimento()">Salvar Empreendimento</button>
         </div>
       </div>
     </div>
@@ -1044,8 +1278,14 @@ async function iniciarPortal() {
   document.getElementById('portal-app').style.display = 'flex';
 
   var u = PORTAL.user;
-  document.getElementById('p-avatar').textContent       = u.nome ? u.nome[0].toUpperCase() : '?';
-  document.getElementById('p-nome-header').textContent  = u.nome || u.email;
+  document.getElementById('p-avatar').textContent      = u.nome ? u.nome[0].toUpperCase() : '?';
+  document.getElementById('p-nome-header').textContent = u.nome || u.email;
+
+  // Saudação por horário
+  var h = new Date().getHours();
+  var s = h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
+  var el = document.getElementById('dash-saudacao');
+  if (el) el.textContent = s + ', ' + (u.nome || u.email).split(' ')[0] + '!';
 
   // Preenche perfil
   document.getElementById('perf-nome').value  = u.nome  || '';
@@ -1093,6 +1333,16 @@ function fmtDate(s) {
 }
 
 function renderProcessos() {
+  // Métricas do dashboard
+  var total    = PORTAL.processos.length;
+  var analise  = PORTAL.processos.filter(function(p){ return p.status === 'Em Análise'; }).length;
+  var exig     = PORTAL.processos.filter(function(p){ return p.status === 'Exigência'; }).length;
+  var el;
+  el = document.getElementById('dash-total');    if (el) el.textContent = total;
+  el = document.getElementById('dash-analise');  if (el) el.textContent = analise;
+  el = document.getElementById('dash-exigencia');if (el) el.textContent = exig;
+  el = document.getElementById('dash-licencas-count'); if (el) el.textContent = PORTAL.licencas.length;
+
   var lista = document.getElementById('lista-processos');
   if (!PORTAL.processos.length) {
     lista.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/></svg><p>Nenhum processo encontrado</p><small>Clique em "Novo Requerimento" para iniciar</small></div>';
@@ -1163,8 +1413,8 @@ async function verDetalhe(id) {
       '<div class="section-title">Documentos Anexados</div>' +
       '<div style="margin-bottom:12px">' + docsHtml + '</div>' +
 
-      // Upload apenas se não emitido/indeferido
-      (p.status !== 'Emitido' && p.status !== 'Indeferido' ? (
+      // Upload apenas se Exigência ou técnico liberou
+      (p.status === 'Exigência' || p.permitir_upload === true ? (
         '<label class="upload-area" style="cursor:pointer" onmouseenter="this.style.borderColor=\'var(--verde2)\'" onmouseleave="this.style.borderColor=\'\'">' +
           '<svg viewBox="0 0 24 24" fill="none" stroke="var(--verde)" stroke-width="2" style="width:28px;height:28px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>' +
           '<p>Clique para anexar documentos</p>' +
@@ -1172,7 +1422,7 @@ async function verDetalhe(id) {
           '<input type="file" id="upload-input" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx" style="display:none" onchange="uploadDetalhe(this,\'' + p.id + '\')">' +
           '<div class="upload-status" id="upload-status"></div>' +
         '</label>'
-      ) : '') +
+      ) : '<p style="font-size:13px;color:var(--text3);text-align:center;padding:16px 0;font-style:italic">Envio de documentos disponível somente quando solicitado pela SEMMA.</p>') +
 
       '<hr class="divider">' +
       '<div class="section-title">Histórico de Tramitação</div>' +
@@ -1215,47 +1465,215 @@ function fileToBase64Portal(file) {
 }
 
 // ── NOVO REQUERIMENTO ──
+
+// ════════════════════════════════════════════
+// WIZARD DE SOLICITAÇÃO
+// ════════════════════════════════════════════
+
+var STEP_ATUAL = 1;
+var EMP_SELECIONADO = null;
+var EMP_IDX = -1;
+var EMPREENDIMENTOS = [];
+var DOCS_PENDENTES = [];
+
+function iniciarSolicitacao() {
+  STEP_ATUAL = 1;
+  EMP_SELECIONADO = null;
+  EMP_IDX = -1;
+  DOCS_PENDENTES = [];
+  ['novo-tipo','novo-ativ','novo-obs'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  var resumo = document.getElementById('resumo-requerimento');
+  if (resumo) resumo.innerHTML = '';
+  var docsLista = document.getElementById('docs-lista-wizard');
+  if (docsLista) docsLista.innerHTML = '';
+  atualizarStepper();
+  renderEmpreendimentos();
+  goPortal('novo', document.getElementById('ntab-novo'));
+}
+
+function cancelarSolicitacao() {
+  goPortal('processos', document.getElementById('ntab-processos'));
+}
+
+function stepAvancar() {
+  if (STEP_ATUAL === 1) {
+    if (!EMP_SELECIONADO) { alert('Selecione ou cadastre um empreendimento.'); return; }
+    STEP_ATUAL = 2;
+  } else if (STEP_ATUAL === 2) {
+    var tipo = document.getElementById('novo-tipo').value;
+    var ativ = document.getElementById('novo-ativ').value.trim();
+    var err  = document.getElementById('err-step2');
+    err.style.display = 'none';
+    if (!tipo) { err.textContent = 'Selecione a modalidade de licença.'; err.style.display='block'; return; }
+    if (!ativ) { err.textContent = 'Descreva a atividade.'; err.style.display='block'; return; }
+    STEP_ATUAL = 3;
+  } else if (STEP_ATUAL === 3) {
+    var err = document.getElementById('err-step3');
+    if (err) err.style.display = 'none';
+    STEP_ATUAL = 4;
+    gerarResumo();
+  } else if (STEP_ATUAL === 4) {
+    submeterRequerimento();
+    return;
+  }
+  atualizarStepper();
+}
+
+function stepAnterior() {
+  if (STEP_ATUAL > 1) { STEP_ATUAL--; atualizarStepper(); }
+}
+
+function atualizarStepper() {
+  // Mostra/oculta etapas
+  for (var i = 1; i <= 4; i++) {
+    var el = document.getElementById('step-' + i);
+    if (el) el.style.display = i === STEP_ATUAL ? '' : 'none';
+  }
+  // Atualiza circles
+  for (var j = 1; j <= 4; j++) {
+    var ind = document.getElementById('step-ind-' + j);
+    var circ = document.getElementById('step-circ-' + j);
+    if (!ind || !circ) continue;
+    ind.className = 'step-item';
+    if (j < STEP_ATUAL)      { ind.classList.add('done'); circ.textContent = ''; }
+    else if (j === STEP_ATUAL){ ind.classList.add('active'); circ.textContent = j; }
+    else                       { circ.textContent = j; }
+    var line = document.getElementById('step-line-' + j);
+    if (line) line.className = 'step-line' + (j < STEP_ATUAL ? ' done' : '');
+  }
+  // Botões
+  document.getElementById('btn-voltar-step').style.display = STEP_ATUAL > 1 ? '' : 'none';
+  var btnAv = document.getElementById('btn-avancar-step');
+  btnAv.innerHTML = STEP_ATUAL === 4
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><polyline points="20 6 9 17 4 12"/></svg> Enviar Requerimento'
+    : 'Avançar <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="9 18 15 12 9 6"/></svg>';
+}
+
+// ── EMPREENDIMENTOS ──────────────────────────────────
+function renderEmpreendimentos(filtro) {
+  var lista = document.getElementById('lista-empreendimentos');
+  var vazio = document.getElementById('emp-vazio');
+  if (!lista) return;
+  var items = filtro
+    ? EMPREENDIMENTOS.filter(function(e) { return e.nome.toLowerCase().includes(filtro.toLowerCase()); })
+    : EMPREENDIMENTOS;
+  if (!items.length) {
+    lista.innerHTML = '';
+    if (vazio) vazio.style.display = 'block';
+    return;
+  }
+  if (vazio) vazio.style.display = 'none';
+  lista.innerHTML = items.map(function(e, i) {
+    var realIdx = EMPREENDIMENTOS.indexOf(e);
+    var sel = realIdx === EMP_IDX ? ' selected' : '';
+    return '<div class="emp-option' + sel + '" onclick="selecionarEmp(' + realIdx + ')">' +
+      '<div class="emp-option-radio"></div>' +
+      '<div class="emp-option-info">' +
+        '<div class="emp-option-nome">' + e.nome + '</div>' +
+        '<div class="emp-option-doc">' + (e.doc || '') + '</div>' +
+        (e.ativ ? '<div class="emp-option-ativ">' + e.ativ + '</div>' : '') +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function filtrarEmpreendimentos() {
+  renderEmpreendimentos(document.getElementById('emp-busca').value);
+}
+
+function selecionarEmp(idx) {
+  EMP_IDX = idx;
+  EMP_SELECIONADO = EMPREENDIMENTOS[idx];
+  renderEmpreendimentos(document.getElementById('emp-busca').value);
+}
+
+function novoEmpreendimento() {
+  document.getElementById('emp-nome').value     = '';
+  document.getElementById('emp-doc').value      = '';
+  document.getElementById('emp-ativ').value     = '';
+  document.getElementById('emp-cep').value      = '';
+  document.getElementById('emp-logradouro').value = '';
+  document.getElementById('emp-numero').value   = '';
+  document.getElementById('emp-bairro').value   = '';
+  document.getElementById('emp-cidade').value   = 'Serra Redonda';
+  document.getElementById('emp-uf').value       = 'PB';
+  document.getElementById('modal-emp').style.display = 'flex';
+}
+
+function fecharModalEmp() {
+  document.getElementById('modal-emp').style.display = 'none';
+}
+
+function salvarEmpreendimento() {
+  var nome  = document.getElementById('emp-nome').value.trim();
+  var doc   = document.getElementById('emp-doc').value.trim();
+  var ativ  = document.getElementById('emp-ativ').value.trim();
+  var cep   = document.getElementById('emp-cep').value.trim();
+  var logr  = document.getElementById('emp-logradouro').value.trim();
+  var num   = document.getElementById('emp-numero').value.trim();
+  var bairro= document.getElementById('emp-bairro').value.trim();
+  var cidade= document.getElementById('emp-cidade').value.trim();
+  var uf    = document.getElementById('emp-uf').value.trim();
+  if (!nome) { alert('Informe o nome do empreendimento.'); return; }
+  var partes = [logr, num, bairro, cidade && uf ? cidade+'/'+uf : cidade, cep ? 'CEP '+cep : ''].filter(Boolean);
+  var novo = { nome:nome, doc:doc, ativ:ativ, end:partes.join(', '), cep:cep, logr:logr, num:num, bairro:bairro, cidade:cidade, uf:uf };
+  EMPREENDIMENTOS.push(novo);
+  EMP_IDX = EMPREENDIMENTOS.length - 1;
+  EMP_SELECIONADO = novo;
+  fecharModalEmp();
+  renderEmpreendimentos();
+  toast('Empreendimento cadastrado!', 'ok');
+}
+
+function gerarResumo() {
+  var tipo = document.getElementById('novo-tipo');
+  var tipoTexto = tipo.options[tipo.selectedIndex].text;
+  var end = EMP_SELECIONADO.end || '—';
+
+  document.getElementById('resumo-requerimento').innerHTML = [
+    ['Empreendimento', EMP_SELECIONADO.nome],
+    ['CPF / CNPJ', EMP_SELECIONADO.doc || '—'],
+    ['Modalidade', tipoTexto],
+    ['Atividade', document.getElementById('novo-ativ').value],
+    ['Endereço', end],
+    ['Documentos', DOCS_PENDENTES.length ? DOCS_PENDENTES.length + ' arquivo(s) selecionado(s)' : 'Nenhum'],
+  ].map(function(item) {
+    return '<div class="resumo-item"><label>' + item[0] + '</label><span>' + item[1] + '</span></div>';
+  }).join('');
+}
+
 async function submeterRequerimento() {
   var tipo = document.getElementById('novo-tipo').value;
   var ativ = document.getElementById('novo-ativ').value.trim();
-  var logr = document.getElementById('novo-logradouro').value.trim().toUpperCase();
-  var num  = document.getElementById('novo-numero').value.trim().toUpperCase();
-  var bairro = document.getElementById('novo-bairro').value.trim().toUpperCase();
-  var err  = document.getElementById('novo-erro');
-  err.style.display = 'none';
+  var err  = document.getElementById('err-step4');
+  if (err) err.style.display = 'none';
 
-  if (!tipo) { err.textContent = 'Selecione a modalidade de licença.'; err.style.display='block'; return; }
-  if (!ativ) { err.textContent = 'Descreva a atividade / empreendimento.'; err.style.display='block'; return; }
-  if (!logr) { err.textContent = 'Informe o logradouro.'; err.style.display='block'; return; }
-  if (!num)  { err.textContent = 'Informe o número.'; err.style.display='block'; return; }
-  if (!bairro){ err.textContent = 'Informe o bairro.'; err.style.display='block'; return; }
+  if (!EMP_SELECIONADO || !tipo || !ativ) {
+    if (err) { err.textContent = 'Dados incompletos. Volte e preencha todos os campos obrigatórios.'; err.style.display = 'block'; }
+    return;
+  }
 
-  var cep    = document.getElementById('novo-cep').value.trim();
-  var comp   = '';
-  var cidade = document.getElementById('novo-cidade').value.trim().toUpperCase();
-  var uf     = document.getElementById('novo-uf').value.trim().toUpperCase();
-  var lat    = document.getElementById('novo-lat').value.trim();
-  var lon    = document.getElementById('novo-lon').value.trim();
-  var obs    = document.getElementById('novo-obs').value.trim();
-
-  var partes = [logr, num, bairro, cidade && uf ? cidade+'/'+uf : cidade, cep ? 'CEP '+cep : ''].filter(Boolean);
-  var end = partes.join(', ');
+  var obs = document.getElementById('novo-obs').value.trim();
+  var end = EMP_SELECIONADO.end || '';
 
   var hoje = new Date().toISOString().split('T')[0];
   var ano  = new Date().getFullYear();
   var id   = 'SEMA-' + ano + '-P' + String(Date.now()).slice(-4);
 
   var np = {
-    id: id,
-    req:   PORTAL.user.nome,
-    doc:   PORTAL.user.doc,
-    tel:   PORTAL.user.tel,
-    email: PORTAL.user.email,
+    id:    id,
+    req:   EMP_SELECIONADO.nome || PORTAL.user.nome,
+    doc:   EMP_SELECIONADO.doc  || PORTAL.user.doc || '',
+    tel:   PORTAL.user.tel   || '',
+    email: PORTAL.user.email || '',
     tipo:  tipo,
     ativ:  ativ,
     end:   end,
-    lat:   lat,
-    lon:   lon,
+    lat:   EMP_SELECIONADO.lat || '',
+    lon:   EMP_SELECIONADO.lon || '',
     docs:  [],
     conds: [],
     status: 'Aguardando Documentos',
@@ -1271,20 +1689,18 @@ async function submeterRequerimento() {
     if (res.ok) {
       PORTAL.processos.unshift(np);
       toast('Requerimento enviado! Protocolo: ' + id, 'ok');
-      // Limpa form
-      ['novo-tipo','novo-ativ','novo-cep','novo-logradouro','novo-numero','novo-bairro','novo-lat','novo-lon','novo-obs'].forEach(function(f) {
-        var el = document.getElementById(f);
-        if (el) el.value = (f === 'novo-cidade' ? 'Serra Redonda' : f === 'novo-uf' ? 'PB' : '');
-      });
+      EMP_SELECIONADO = null;
+      EMP_IDX = -1;
+      DOCS_PENDENTES = [];
+      STEP_ATUAL = 1;
       renderProcessos();
       goPortal('processos', document.getElementById('ntab-processos'));
     } else {
-      err.textContent = 'Erro ao enviar. Tente novamente.';
-      err.style.display = 'block';
+      if (err) { err.textContent = 'Erro ao enviar. Tente novamente.'; err.style.display = 'block'; }
     }
   } catch(e) {
-    err.textContent = 'Erro de conexão.';
-    err.style.display = 'block';
+    if (err) { err.textContent = 'Erro de conexao. Verifique sua internet.'; err.style.display = 'block'; }
+    console.error(e);
   } finally { hideLoad(); }
 }
 
@@ -1516,29 +1932,137 @@ async function salvarPerfil() {
 
 // ── MÁSCARAS ──
 function mascaraDocPortal(el) {
-  var v = el.value.replace(/\D/g,'');
+  var v = el.value.replace(/\D/g, '').slice(0, 14);
   if (v.length <= 11) {
-    if (v.length > 9) v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/,'..-');
-    else if (v.length > 6) v = v.replace(/(\d{3})(\d{3})(\d{0,3})/,'..');
-    else if (v.length > 3) v = v.replace(/(\d{3})(\d{0,3})/,'.');
+    if (v.length > 9)      v = v.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, '$1.$2.$3-$4');
+    else if (v.length > 6) v = v.replace(/(\d{3})(\d{3})(\d{0,3})/,        '$1.$2.$3');
+    else if (v.length > 3) v = v.replace(/(\d{3})(\d{0,3})/,               '$1.$2');
   } else {
-    v = v.slice(0,14);
-    v = v.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2})/,'../-');
+    v = v.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2})/, '$1.$2.$3/$4-$5');
   }
   el.value = v;
 }
 
 function mascaraTelPortal(el) {
-  var v = el.value.replace(/\D/g,'').slice(0,11);
-  if (v.length > 6) v = v.replace(/(\d{2})(\d{5})(\d{0,4})/,'() -');
-  else if (v.length > 2) v = v.replace(/(\d{2})(\d{0,5})/,'() ');
+  var v = el.value.replace(/\D/g, '').slice(0, 11);
+  if (v.length > 10)     v = v.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+  else if (v.length > 6) v = v.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+  else if (v.length > 2) v = v.replace(/(\d{2})(\d{0,5})/, '($1) $2');
   el.value = v;
 }
 
 function mascaraCepPortal(el) {
-  var v = el.value.replace(/\D/g,'').slice(0,8);
-  if (v.length > 5) v = v.replace(/(\d{5})(\d{0,3})/,'-');
+  var v = el.value.replace(/\D/g, '').slice(0, 8);
+  if (v.length > 5) v = v.replace(/(\d{5})(\d{0,3})/, '$1-$2');
   el.value = v;
+}
+
+
+async function buscarCepEmp() {
+  var cepEl = document.getElementById('emp-cep');
+  if (!cepEl) return;
+  var cep = cepEl.value.replace(/\D/g,'');
+  if (cep.length !== 8) { toast('CEP inválido.', 'err'); return; }
+  try {
+    var r = await fetch('https://viacep.com.br/ws/'+cep+'/json/');
+    var d = await r.json();
+    if (!d.erro) {
+      document.getElementById('emp-logradouro').value = (d.logradouro||'').toUpperCase();
+      document.getElementById('emp-bairro').value     = (d.bairro||'').toUpperCase();
+      document.getElementById('emp-cidade').value     = (d.localidade||'').toUpperCase();
+      document.getElementById('emp-uf').value         = (d.uf||'').toUpperCase();
+      toast('Endereço preenchido!', 'ok');
+    } else { toast('CEP não encontrado.', 'warn'); }
+  } catch(e) { toast('Erro ao buscar CEP.', 'err'); }
+}
+
+// ── ATIVIDADES POR CATEGORIA ──────────────────────────────────
+var ATIVIDADES_CAT = [
+  { cat: 'Dispensa de Licença', items: ['Residências unifamiliares', 'Pequeno comércio até 50m²', 'Igrejas e templos religiosos', 'Escolas até 500 alunos', 'Associações comunitárias', 'Consultórios profissionais individuais'] },
+  { cat: 'Agropecuária', items: ['Avicultura convencional', 'Suinocultura', 'Bovinocultura de corte', 'Bovinocultura leiteira', 'Piscicultura', 'Apicultura', 'Fruticultura', 'Silvicultura', 'Ovinocultura', 'Caprinocultura'] },
+  { cat: 'Comércio e Serviços', items: ['Posto de combustível', 'Supermercado / Mercado', 'Restaurante e lanchonete', 'Hotel e pousada', 'Clínica médica e odontológica', 'Farmácia e drogaria', 'Oficina mecânica', 'Lavanderia', 'Salão de beleza', 'Academia de ginástica'] },
+  { cat: 'Atividades Industriais', items: ['Beneficiamento de produtos agrícolas', 'Fabricação de móveis', 'Cerâmica e olaria', 'Confecções e vestuário', 'Padaria e confeitaria', 'Frigorífico e abatedouro', 'Serraria e madeireira', 'Metalurgia e ferraria'] },
+  { cat: 'Infraestrutura e Obras', items: ['Loteamentos urbanos', 'Pavimentação de vias', 'Canais de irrigação', 'Barragens e açudes', 'Torres de transmissão', 'Subestações elétricas', 'Terraplanagem e aterro de terra'] },
+  { cat: 'Mineração', items: ['Extração de areia', 'Extração de argila', 'Extração de pedra (pedreiras)', 'Extração de calcário', 'Extração de granito', 'Extração de areia quartzosa'] },
+  { cat: 'Resíduos Sólidos', items: ['Aterro sanitário', 'Coleta e transporte de resíduos sólidos', 'Reciclagem de materiais', 'Compostagem', 'Tratamento de resíduos industriais'] },
+  { cat: 'Água e Saneamento', items: ['Captação de água superficial', 'Estação de Tratamento de Água (ETA)', 'Estação de Tratamento de Esgoto (ETE)', 'Poço artesiano / tubular', 'Irrigação por aspersão ou gotejamento'] },
+  { cat: 'Florestal', items: ['Desmatamento / Supressão de vegetação', 'Reflorestamento', 'Carvoaria', 'Extração de madeira nativa', 'Exploração de produtos florestais não madeireiros'] },
+  { cat: 'Turismo e Lazer', items: ['Hotel fazenda', 'Camping e acampamento', 'Parque temático', 'Clube recreativo', 'Balneário e parque aquático'] }
+];
+
+var _ativTarget = 'novo-ativ';
+
+function abrirModalAtiv(targetId) {
+  _ativTarget = targetId || 'novo-ativ';
+  document.getElementById('ativ-busca').value = '';
+  renderAtividades('');
+  document.getElementById('modal-ativ').style.display = 'flex';
+}
+
+function fecharModalAtiv() {
+  document.getElementById('modal-ativ').style.display = 'none';
+}
+
+function filtrarAtiv() {
+  renderAtividades(document.getElementById('ativ-busca').value);
+}
+
+function renderAtividades(filtro) {
+  var lista = document.getElementById('ativ-lista');
+  var f = filtro.trim().toLowerCase();
+  lista.innerHTML = ATIVIDADES_CAT.map(function(cat, ci) {
+    var items = f
+      ? cat.items.filter(function(it) { return it.toLowerCase().includes(f) || cat.cat.toLowerCase().includes(f); })
+      : cat.items;
+    if (!items.length) return '';
+    return '<div class="ativ-cat' + (f ? ' open' : '') + '" id="ativ-cat-' + ci + '">' +
+      '<div class="ativ-cat-header" onclick="toggleAtivCat(' + ci + ')">' +
+        '<span>' + cat.cat + '</span>' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><polyline points="6 9 12 15 18 9"/></svg>' +
+      '</div>' +
+      '<div class="ativ-cat-body">' +
+        items.map(function(it) {
+          return '<div class="ativ-item" onclick="selecionarAtiv('' + it.replace(/'/g, "\'") + '')">' + it + '</div>';
+        }).join('') +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function toggleAtivCat(ci) {
+  var el = document.getElementById('ativ-cat-' + ci);
+  if (el) el.classList.toggle('open');
+}
+
+function selecionarAtiv(nome) {
+  var el = document.getElementById(_ativTarget);
+  if (el) el.value = nome.toUpperCase();
+  fecharModalAtiv();
+}
+
+// ── DOCUMENTOS WIZARD ────────────────────────────────────────
+function adicionarDocsWizard(input) {
+  Array.from(input.files).forEach(function(f) { DOCS_PENDENTES.push(f); });
+  renderDocsWizard();
+  input.value = '';
+}
+
+function removerDocWizard(idx) {
+  DOCS_PENDENTES.splice(idx, 1);
+  renderDocsWizard();
+}
+
+function renderDocsWizard() {
+  var lista = document.getElementById('docs-lista-wizard');
+  if (!lista) return;
+  if (!DOCS_PENDENTES.length) { lista.innerHTML = ''; return; }
+  lista.innerHTML = DOCS_PENDENTES.map(function(f, i) {
+    return '<div class="doc-pendente">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="var(--verde)" stroke-width="2" style="width:15px;height:15px;flex-shrink:0"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' +
+      '<span class="doc-pendente-nome">' + f.name + '</span>' +
+      '<button class="doc-pendente-rem" onclick="removerDocWizard(' + i + ')" title="Remover">&times;</button>' +
+    '</div>';
+  }).join('');
 }
 
 async function buscarCepPortal() {
@@ -1568,5 +2092,19 @@ function fmtCoordPortal(input, isLat) {
   }
 }
 </script>
+
+    <!-- MODAL: Atividades por Categoria (LC 005/2025) -->
+    <div id="modal-ativ" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:flex-start;justify-content:center;padding-top:40px;overflow-y:auto" onclick="if(event.target===this)fecharModalAtiv()">
+      <div style="background:#fff;border-radius:var(--radius2);width:100%;max-width:560px;margin:0 20px 40px;box-shadow:var(--shadow2)">
+        <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+          <h3 style="font-family:var(--ff-display);font-size:17px;font-weight:700">Selecionar Atividade — LC 005/2025</h3>
+          <button onclick="fecharModalAtiv()" style="background:none;border:none;cursor:pointer;font-size:22px;color:var(--text3);padding:2px 8px;line-height:1">&times;</button>
+        </div>
+        <div style="padding:14px 24px;border-bottom:1px solid var(--border)">
+          <input id="ativ-busca" placeholder="Buscar atividade..." oninput="filtrarAtiv()" style="width:100%;padding:10px 14px;border:1.5px solid var(--border2);border-radius:var(--radius);font-size:14px;outline:none;font-family:var(--ff-body)">
+        </div>
+        <div id="ativ-lista" style="padding:14px 24px;max-height:420px;overflow-y:auto"></div>
+      </div>
+    </div>
 </body>
 </html>
