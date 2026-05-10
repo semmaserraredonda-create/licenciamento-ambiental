@@ -2546,7 +2546,10 @@ function renderDetFooter(p) {
   const btnUploadStyle = liberado
     ? 'background:#15803d;color:#fff;border:1px solid #15803d;font-weight:700'
     : 'background:transparent;color:var(--text2);border:1px solid var(--border2)';
-  const btnUploadLabel = liberado ? '&#10003; Upload Liberado' : 'Liberar Upload';
+  const btnUploadIcon = liberado
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width:12px;height:12px"><polyline points="20 6 9 17 4 12"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>';
+  const btnUploadLabel = liberado ? ' Upload Liberado' : ' Liberar Upload';
   const btnUploadTitle = liberado ? 'Upload liberado — clique para revogar' : 'Liberar envio de documentos pelo cidadão';
 
   footerEl.innerHTML =
@@ -2560,8 +2563,8 @@ function renderDetFooter(p) {
       ' Enviar Mensagem' +
     '</button> ' +
     '<button class="btn" style="' + btnUploadStyle + '" title="' + btnUploadTitle + '" onclick="toggleUploadPermissao(\'' + p.id + '\')">' +
-      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>' +
-      ' ' + btnUploadLabel +
+      btnUploadIcon +
+      btnUploadLabel +
     '</button> ' +
     '<button class="btn btn-amber" onclick="closeModal(\'m-detalhe\');openStatus(\'' + p.id + '\')">Atualizar Status</button>' +
     (p.status === 'Aprovado'

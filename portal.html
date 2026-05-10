@@ -885,6 +885,7 @@ body { font-family: var(--ff-body); background: var(--bg); color: var(--text); m
     <div class="nav-tab active" id="ntab-processos" onclick="goPortal('processos',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       Meus Processos
+      <span id="badge-msgs" style="display:none;background:var(--red);color:#fff;font-size:10px;font-weight:700;font-family:var(--ff-mono);padding:2px 6px;border-radius:99px;margin-left:4px;line-height:1.4">0</span>
     </div>
     <div class="nav-tab" id="ntab-novo" onclick="goPortal('novo',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
@@ -1503,6 +1504,7 @@ async function carregarDados() {
   } finally { hideLoad(); }
   renderProcessos();
   renderLicencas();
+  verificarMensagensNaoLidas();
 }
 
 // ── NAVEGAÇÃO ──
@@ -1577,6 +1579,102 @@ function removerEmpreendimento(idx) {
   toast('Empreendimento removido.', 'ok');
 }
 
+// ── UPLOAD NO DETALHE DO PROCESSO ────────────────────────────────────
+
+function gerarBlocoUpload(p) {
+  var permitido = (
+    p.status === 'Exigência' ||
+    p.permitir_upload === true ||
+    p.permitir_upload === 'true' ||
+    p.permitir_upload === 'TRUE'
+  );
+  var encerrado = (p.status === 'Emitido' || p.status === 'Indeferido');
+
+  if (encerrado) return '';
+
+  if (!permitido) {
+    return '<div style="display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:4px">'
+      + '<svg viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" style="width:16px;height:16px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+      + '<span style="font-size:13px;color:var(--text3)">Envio de documentos disponível somente quando solicitado pela SEMMA.</span>'
+      + '</div>';
+  }
+
+  // Input com ID único por processo para evitar conflitos
+  var inputId = 'upload-proc-' + p.id.replace(/[^a-z0-9]/gi, '-');
+  return '<label for="' + inputId + '" style="display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;background:var(--bg);border:2px dashed var(--border2);border-radius:var(--radius);padding:24px;text-align:center;transition:border-color 0.15s;margin-bottom:4px"'
+    + ' onmouseenter="this.style.borderColor=\'var(--verde2)\'" onmouseleave="this.style.borderColor=\'\'">'
+    + '<svg viewBox="0 0 24 24" fill="none" stroke="var(--verde)" stroke-width="2" style="width:28px;height:28px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>'
+    + '<span style="font-size:14px;font-weight:500;color:var(--text2)">Clique para selecionar ou arraste os arquivos</span>'
+    + '<span style="font-size:12px;color:var(--text3)">PDF, imagens, Word, Excel — até 10MB por arquivo</span>'
+    + '<input type="file" id="' + inputId + '" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx" style="display:none"'
+    + ' onchange="uploadDetalhe(this,\'' + p.id + '\')">'
+    + '<div id="upload-status-' + p.id.replace(/[^a-z0-9]/gi, '-') + '" style="font-size:12px;color:var(--verde2);font-family:var(--ff-mono);min-height:16px"></div>'
+    + '</label>';
+}
+
+
+
+async function enviarMensagemCidadao(proto) {
+  var textarea = document.getElementById('cid-msg-texto');
+  var texto = textarea ? textarea.value.trim() : '';
+  if (!texto) { toast('Digite uma mensagem antes de enviar.', 'err'); return; }
+
+  var hoje = new Date().toISOString().split('T')[0];
+  var nomeRem = PORTAL.user ? PORTAL.user.nome : 'Solicitante';
+  var textoHist = '[CID] ' + nomeRem + ': ' + texto;
+
+  var p = PORTAL.processos.find(function(x) { return x.id === proto; });
+  if (p) {
+    if (!Array.isArray(p.hist)) p.hist = [];
+    p.hist.push({ d: hoje, t: textoHist });
+  }
+
+  if (textarea) textarea.value = '';
+  toast('Mensagem enviada à SEMMA!', 'ok');
+  setTimeout(function() { verDetalhe(proto); }, 200);
+
+  try {
+    await gasPost('salvarHistorico', { proto: proto, data: hoje, texto: textoHist });
+  } catch(e) { console.warn('Falha ao enviar mensagem:', e); }
+}
+
+// ── BADGE DE MENSAGEM NÃO LIDA ───────────────────────────────────────
+
+function getMsgsLidasKey() {
+  return 'sema_msgs_lidas_' + (PORTAL.user ? PORTAL.user.email : 'anon');
+}
+
+function verificarMensagensNaoLidas() {
+  var totalNaoLidas = 0;
+  PORTAL.processos.forEach(function(p) {
+    var lidas = JSON.parse(localStorage.getItem(getMsgsLidasKey()) || '{}');
+    (p.hist || []).forEach(function(h) {
+      if (h.t && h.t.indexOf('[MSG]') === 0) {
+        var chave = p.id + '_' + h.d + '_' + h.t.length;
+        if (!lidas[chave]) totalNaoLidas++;
+      }
+    });
+  });
+  var badge = document.getElementById('badge-msgs');
+  if (badge) {
+    badge.textContent = totalNaoLidas;
+    badge.style.display = totalNaoLidas > 0 ? 'inline-flex' : 'none';
+  }
+}
+
+function marcarMensagensLidas(proto) {
+  var p = PORTAL.processos.find(function(x) { return x.id === proto; });
+  if (!p) return;
+  var lidas = JSON.parse(localStorage.getItem(getMsgsLidasKey()) || '{}');
+  (p.hist || []).forEach(function(h) {
+    if (h.t && h.t.indexOf('[MSG]') === 0) {
+      lidas[p.id + '_' + h.d + '_' + h.t.length] = true;
+    }
+  });
+  localStorage.setItem(getMsgsLidasKey(), JSON.stringify(lidas));
+  verificarMensagensNaoLidas();
+}
+
 // ── MEUS PROCESSOS ──
 function pilClass(status) {
   var map = { 'Aguardando Documentos':'pill-aguardando','Em Análise':'pill-analise','Exigência':'pill-exigencia','Aprovado':'pill-aprovado','Emitido':'pill-emitido','Indeferido':'pill-indeferido' };
@@ -1624,6 +1722,9 @@ async function verDetalhe(id) {
   var p = PORTAL.processos.find(function(x) { return x.id === id; });
   if (!p) return;
 
+  // Marca mensagens do técnico como lidas
+  marcarMensagensLidas(id);
+
   goPortal('detalhe', null);
   document.querySelectorAll('.nav-tab').forEach(function(t) { t.classList.remove('active'); });
   document.getElementById('ntab-processos').classList.add('active');
@@ -1647,9 +1748,35 @@ async function verDetalhe(id) {
 
   var histHtml = hist.length
     ? '<ul class="timeline">' + hist.slice().reverse().map(function(h) {
-        return '<li class="tl-item"><div class="tl-date">' + fmtDate(h.d) + '</div><div class="tl-text">' + h.t + '</div></li>';
+        var isMsg = h.t && h.t.indexOf('[MSG]') === 0;
+        var isCid = h.t && h.t.indexOf('[CID]') === 0;
+        var texto = isMsg ? h.t.replace(/^\[MSG\]\s*/, '') : isCid ? h.t.replace(/^\[CID\]\s*/, '') : h.t;
+        if (isMsg) {
+          return '<li class="tl-item" style="list-style:none">'
+            + '<div class="tl-date">' + fmtDate(h.d) + '</div>'
+            + '<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:12px 14px;margin-top:4px">'
+            + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">'
+            + '<svg viewBox="0 0 24 24" fill="none" stroke="#15803d" stroke-width="2.5" style="width:14px;height:14px;flex-shrink:0"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>'
+            + '<span style="font-size:10px;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:0.07em;font-family:var(--ff-mono)">Mensagem da SEMMA</span>'
+            + '</div>'
+            + '<div style="font-size:13px;color:#1a1a1a;line-height:1.6">' + texto + '</div>'
+            + '</div></li>';
+        }
+        if (isCid) {
+          return '<li class="tl-item" style="list-style:none">'
+            + '<div class="tl-date">' + fmtDate(h.d) + '</div>'
+            + '<div style="background:#eff6ff;border:1.5px solid #93c5fd;border-radius:10px;padding:12px 14px;margin-top:4px">'
+            + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">'
+            + '<svg viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2.5" style="width:14px;height:14px;flex-shrink:0"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
+            + '<span style="font-size:10px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:0.07em;font-family:var(--ff-mono)">Você enviou</span>'
+            + '</div>'
+            + '<div style="font-size:13px;color:#1a1a1a;line-height:1.6">' + texto + '</div>'
+            + '</div></li>';
+        }
+        return '<li class="tl-item"><div class="tl-date">' + fmtDate(h.d) + '</div><div class="tl-text">' + texto + '</div></li>';
       }).join('') + '</ul>'
     : '<p style="font-size:13px;color:var(--text3)">Nenhum registro.</p>';
+
 
   var protoAtual = p.id;
   document.getElementById('detalhe-content').innerHTML =
@@ -1671,39 +1798,41 @@ async function verDetalhe(id) {
       '<div class="section-title">Documentos Anexados</div>' +
       '<div style="margin-bottom:12px">' + docsHtml + '</div>' +
 
-      // Upload condicional: Exigencia ou permitir_upload=true
-      (function() {
-        var permitido = (p.status === 'Exigência' || p.permitir_upload === true || p.permitir_upload === 'true');
-        var encerrado = (p.status === 'Emitido' || p.status === 'Indeferido');
-        if (encerrado) return '';
-        if (!permitido) {
-          return '<div style="display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px">'
-            + '<svg viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" style="width:16px;height:16px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
-            + '<span style="font-size:13px;color:var(--text3)">Envio de documentos disponível somente quando solicitado pela SEMMA.</span>'
-            + '</div>';
-        }
-        return '<div id="det-upload-wrap">'
-          + '<label id="det-upload-label" style="display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;background:var(--bg);border:2px dashed var(--border2);border-radius:var(--radius);padding:24px;text-align:center" id="det-upload-area">'
-          + '<svg viewBox="0 0 24 24" fill="none" stroke="var(--verde)" stroke-width="2" style="width:28px;height:28px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>'
-          + '<span style="font-size:14px;font-weight:500;color:var(--text2)">Clique para selecionar ou arraste os arquivos</span>'
-          + '<span style="font-size:12px;color:var(--text3)">PDF, imagens, Word, Excel — até 10MB por arquivo</span>'
-          + '<input type="file" id="upload-input" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx" style="display:none">'
-          + '<div class="upload-status" id="upload-status"></div>'
-          + '</label></div>';
-      })() +
+      // Upload condicional: Exigencia ou permitir_upload liberado pelo tecnico
+      gerarBlocoUpload(p) +
 
       '<hr class="divider">' +
       '<div class="section-title">Histórico de Tramitação</div>' +
       histHtml +
+
+      // Caixa de envio de mensagem pelo cidadão
+      (p.status !== 'Emitido' && p.status !== 'Indeferido' ? (
+        '<hr class="divider">' +
+        '<div class="section-title">Enviar Mensagem à SEMMA</div>' +
+        '<div style="display:flex;flex-direction:column;gap:8px">' +
+          '<textarea id="cid-msg-texto" rows="3" placeholder="Escreva sua mensagem para a SEMMA... Ex: Solicitando esclarecimento sobre a documentação necessária." style="width:100%;background:#fff;border:1.5px solid var(--border2);border-radius:var(--radius);padding:11px 14px;font-family:var(--ff-body);font-size:13px;color:var(--text);outline:none;resize:vertical;box-sizing:border-box" onfocus="this.style.borderColor=\'var(--verde2)\'" onblur="this.style.borderColor=\'var(--border2)\'"></textarea>' +
+          '<div style="display:flex;justify-content:flex-end">' +
+            '<button class="btn btn-primary btn-sm" onclick="enviarMensagemCidadao(\'' + p.id + '\')">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>' +
+              'Enviar Mensagem' +
+            '</button>' +
+          '</div>' +
+        '</div>'
+      ) : '') +
+
     '</div>';
 }
 
 async function uploadDetalhe(input, proto) {
   var files = Array.from(input.files);
   if (!files.length) return;
-  var statusEl = document.getElementById('upload-status');
+
+  // ID do elemento de status usa o mesmo padrão do gerarBlocoUpload
+  var statusId = 'upload-status-' + proto.replace(/[^a-z0-9]/gi, '-');
+  var statusEl = document.getElementById(statusId);
   if (statusEl) statusEl.textContent = 'Enviando ' + files.length + ' arquivo(s)...';
 
+  showLoad('Enviando documentos...');
   var enviados = 0;
   for (var i = 0; i < files.length; i++) {
     try {
@@ -1711,16 +1840,33 @@ async function uploadDetalhe(input, proto) {
       var res = await gasPost('uploadDocumento', { proto: proto, nome: files[i].name, dados: b64, mimeType: files[i].type || 'application/octet-stream' });
       if (res.ok) {
         var p = PORTAL.processos.find(function(x) { return x.id === proto; });
-        if (p) { if (!Array.isArray(p.docs)) p.docs = []; p.docs.push({ nome: res.nome, link: res.link }); }
+        if (p) {
+          if (!Array.isArray(p.docs)) p.docs = [];
+          p.docs.push({ nome: res.nome || files[i].name, link: res.link || '' });
+          await gasPost('salvarProcesso', { dados: p });
+        }
         enviados++;
-        // Atualiza processo no GAS
-        if (p) await gasPost('salvarProcesso', { dados: p });
-      } else { toast('Erro: ' + files[i].name, 'err'); }
-    } catch(e) { toast('Falha ao enviar ' + files[i].name, 'err'); }
+      } else {
+        toast('Erro ao enviar ' + files[i].name + ': ' + (res.erro || 'falha'), 'err');
+      }
+    } catch(e) {
+      toast('Falha ao enviar ' + files[i].name, 'err');
+      console.error(e);
+    }
   }
-  if (statusEl) { statusEl.textContent = enviados + ' arquivo(s) enviado(s)!'; setTimeout(function() { if (statusEl) statusEl.textContent=''; }, 3000); }
+
+  hideLoad();
   input.value = '';
-  if (enviados > 0) { toast(enviados + ' documento(s) enviado(s) ao servidor!', 'ok'); verDetalhe(proto); }
+
+  if (statusEl) {
+    statusEl.textContent = enviados > 0 ? enviados + ' arquivo(s) enviado(s)!' : '';
+    setTimeout(function() { if (statusEl) statusEl.textContent = ''; }, 3000);
+  }
+
+  if (enviados > 0) {
+    toast(enviados + ' documento(s) enviado(s) com sucesso!', 'ok');
+    setTimeout(function() { verDetalhe(proto); }, 500);
+  }
 }
 
 function fileToBase64Portal(file) {
