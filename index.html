@@ -1513,11 +1513,26 @@ tbody td {
       </div>
       <div class="field">
         <label>Mensagem <span class="req">*</span></label>
-        <textarea id="msg-texto" rows="5" placeholder="Digite aqui a mensagem para o solicitante. Ex: Documentos recebidos. Solicito envio da planta baixa assinada pelo responsável técnico." style="resize:vertical"></textarea>
+        <textarea id="msg-texto" rows="4" placeholder="Digite aqui a mensagem para o solicitante. Ex: Documentos recebidos. Solicito envio da planta baixa assinada pelo responsável técnico." style="resize:vertical"></textarea>
       </div>
+      <!-- Lista de arquivos selecionados -->
+      <div id="msg-arquivos-lista" style="display:flex;flex-direction:column;gap:4px;margin-top:-4px;margin-bottom:4px"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('m-mensagem')">Cancelar</button>
+      <!-- Ícone de clipe -->
+      <label for="msg-arquivo-input" title="Anexar documentos"
+        style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;padding:8px 12px;border:1.5px solid var(--border2);border-radius:var(--radius);font-size:13px;font-weight:600;color:var(--text2);transition:all 0.15s;background:transparent"
+        onmouseenter="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
+        onmouseleave="this.style.borderColor='var(--border2)';this.style.color='var(--text2)'">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px">
+          <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
+        </svg>
+        <span id="msg-arquivo-count"></span>
+        <input type="file" id="msg-arquivo-input" multiple
+          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx"
+          style="display:none" onchange="selecionarArquivosTecnico(this)">
+      </label>
       <button class="btn btn-primary" onclick="enviarMensagem()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
         Enviar Mensagem
@@ -2408,7 +2423,39 @@ function openDetalhe(id) {
       ${(p.hist||[]).slice().reverse().map(h => {
         const isMsg = h.t && h.t.startsWith('[MSG]');
         const isCid = h.t && h.t.startsWith('[CID]');
-        const texto = isMsg ? h.t.replace(/^\[MSG\]\s*/, '') : isCid ? h.t.replace(/^\[CID\]\s*/, '') : h.t;
+
+        // Extrai linhas separadas: [MSG]/[CID] e [DOCS]
+        const linhas = (h.t || '').split('\n');
+        const linhaPrincipal = linhas[0] || '';
+        const linhasDocs = linhas.filter(l => l.startsWith('[DOCS]'));
+
+        const texto = isMsg
+          ? linhaPrincipal.replace(/^\[MSG\]\s*/, '')
+          : isCid
+          ? linhaPrincipal.replace(/^\[CID\]\s*/, '')
+          : h.t;
+
+        // Renderiza arquivos se existirem
+        const docsHtmlItems = linhasDocs.map(ld => {
+          const partes = ld.replace('[DOCS] ', '').split(';;');
+          return partes.map(d => {
+            const [nome, link] = d.split('||');
+            return link
+              ? `<a href="${link}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.6);border:1px solid rgba(0,0,0,0.1);border-radius:6px;padding:4px 8px;font-size:11px;font-family:var(--font-mono);text-decoration:none;color:inherit;margin:2px">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  ${nome}
+                </a>`
+              : `<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.6);border:1px solid rgba(0,0,0,0.1);border-radius:6px;padding:4px 8px;font-size:11px;font-family:var(--font-mono);margin:2px">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  ${nome}
+                </span>`;
+          }).join('');
+        }).join('');
+
+        const docsBlock = docsHtmlItems
+          ? `<div style="display:flex;flex-wrap:wrap;gap:2px;margin-top:6px">${docsHtmlItems}</div>`
+          : '';
+
         if (isMsg) {
           return `<li class="tl-item">
             <div class="tl-date">${fmtDate(h.d)}</div>
@@ -2418,6 +2465,7 @@ function openDetalhe(id) {
                 <span style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;font-family:var(--font-mono)">Mensagem enviada ao solicitante</span>
               </div>
               <div class="tl-text" style="color:var(--text)">${texto}</div>
+              ${docsBlock}
             </div>
           </li>`;
         }
@@ -2430,6 +2478,7 @@ function openDetalhe(id) {
                 <span style="font-size:10px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:0.06em;font-family:var(--font-mono)">Mensagem do solicitante</span>
               </div>
               <div class="tl-text" style="color:var(--text)">${texto}</div>
+              ${docsBlock}
             </div>
           </li>`;
         }
@@ -2460,18 +2509,100 @@ function abrirMensagem(id) {
   openModal('m-mensagem');
 }
 
+// ── ARQUIVOS DO TÉCNICO NA MENSAGEM ──────────────────────────────────
+
+var ARQUIVOS_TEC = [];
+
+function selecionarArquivosTecnico(input) {
+  ARQUIVOS_TEC = Array.from(input.files);
+  input.value = '';
+
+  const countEl = document.getElementById('msg-arquivo-count');
+  if (countEl) countEl.textContent = ARQUIVOS_TEC.length > 0 ? ARQUIVOS_TEC.length + ' arquivo(s)' : '';
+
+  const listaEl = document.getElementById('msg-arquivos-lista');
+  if (!listaEl) return;
+  listaEl.innerHTML = ARQUIVOS_TEC.map((f, i) => {
+    const kb = (f.size / 1024).toFixed(0);
+    return `<div style="display:flex;align-items:center;gap:8px;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:8px;padding:6px 10px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" style="width:13px;height:13px;flex-shrink:0"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span style="flex:1;font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</span>
+      <span style="font-size:11px;color:var(--text3);flex-shrink:0">${kb}KB</span>
+      <button onclick="removerArquivoTec(${i})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;line-height:1;padding:0;flex-shrink:0">&#x2715;</button>
+    </div>`;
+  }).join('');
+}
+
+function removerArquivoTec(idx) {
+  ARQUIVOS_TEC.splice(idx, 1);
+  const countEl = document.getElementById('msg-arquivo-count');
+  if (countEl) countEl.textContent = ARQUIVOS_TEC.length > 0 ? ARQUIVOS_TEC.length + ' arquivo(s)' : '';
+  const listaEl = document.getElementById('msg-arquivos-lista');
+  if (!listaEl) return;
+  listaEl.innerHTML = ARQUIVOS_TEC.map((f, i) => {
+    const kb = (f.size / 1024).toFixed(0);
+    return `<div style="display:flex;align-items:center;gap:8px;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:8px;padding:6px 10px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" style="width:13px;height:13px;flex-shrink:0"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span style="flex:1;font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</span>
+      <span style="font-size:11px;color:var(--text3);flex-shrink:0">${kb}KB</span>
+      <button onclick="removerArquivoTec(${i})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;line-height:1;padding:0;flex-shrink:0">&#x2715;</button>
+    </div>`;
+  }).join('');
+}
+
 async function enviarMensagem() {
-  const texto = document.getElementById('msg-texto').value.trim();
-  if (!texto) { toast('Digite a mensagem antes de enviar.', 'err'); return; }
+  const texto    = document.getElementById('msg-texto').value.trim();
+  const arquivos = ARQUIVOS_TEC.slice();
+
+  if (!texto && !arquivos.length) {
+    toast('Digite uma mensagem ou anexe um arquivo.', 'err');
+    return;
+  }
 
   const p = STATE.processos.find(x => x.id === STATE.activeId);
   if (!p) return;
 
   const hoje = new Date().toISOString().split('T')[0];
-  const textoHist = `[MSG] ${STATE.user.name}: ${texto}`;
+
+  // 1. Faz upload dos arquivos e coleta links
+  let docsEnviados = [];
+  if (arquivos.length && STATE.gasUrl) {
+    showLoading('Enviando arquivos...');
+    for (const f of arquivos) {
+      try {
+        const b64 = await fileToBase64(f);
+        const res = await gasPOST('uploadDocumento', {
+          proto: p.id, nome: f.name, dados: b64,
+          mimeType: f.type || 'application/octet-stream'
+        });
+        if (res.ok) {
+          docsEnviados.push({ nome: res.nome || f.name, link: res.link || '' });
+          if (!Array.isArray(p.docs)) p.docs = [];
+          p.docs.push({ nome: res.nome || f.name, link: res.link || '' });
+        } else { toast('Erro: ' + f.name, 'err'); }
+      } catch(e) { toast('Falha: ' + f.name, 'err'); }
+    }
+    hideLoading();
+  }
+
+  // 2. Monta o texto do histórico
+  // Formato: [MSG] nome: texto\n[DOCS] nome1||link1||nome2||link2
+  let textoHist = `[MSG] ${STATE.user.name}: ${texto || '(arquivos anexados)'}`;
+  if (docsEnviados.length) {
+    const docsStr = docsEnviados.map(d => `${d.nome}||${d.link}`).join(';;');
+    textoHist += `\n[DOCS] ${docsStr}`;
+  }
 
   p.hist = p.hist || [];
   p.hist.push({ d: hoje, t: textoHist });
+
+  // Limpa
+  document.getElementById('msg-texto').value = '';
+  ARQUIVOS_TEC = [];
+  const countEl = document.getElementById('msg-arquivo-count');
+  if (countEl) countEl.textContent = '';
+  const listaEl = document.getElementById('msg-arquivos-lista');
+  if (listaEl) listaEl.innerHTML = '';
 
   closeModal('m-mensagem');
   toast('Mensagem enviada ao solicitante!', 'ok');
@@ -2480,9 +2611,34 @@ async function enviarMensagem() {
   if (STATE.gasUrl) {
     try {
       await gasPOST('salvarHistorico', { proto: p.id, data: hoje, texto: textoHist });
-    } catch(e) { console.warn('Falha ao sincronizar mensagem:', e); }
+      if (docsEnviados.length) await gasPOST('salvarProcesso', { dados: p });
+    } catch(e) { console.warn('Falha ao sincronizar:', e); }
   }
 }
+
+// Utilitário: File → base64
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload  = () => resolve(r.result.split(',')[1]);
+    r.onerror = () => reject(r.error);
+    r.readAsDataURL(file);
+  });
+}
+
+function showLoading(msg) {
+  const el = document.getElementById('loading-msg');
+  if (el) el.textContent = msg || 'Carregando...';
+  const ov = document.getElementById('loading-overlay');
+  if (ov) ov.style.display = 'flex';
+}
+
+function hideLoading() {
+  const ov = document.getElementById('loading-overlay');
+  if (ov) ov.style.display = 'none';
+}
+
+
 
 
 
