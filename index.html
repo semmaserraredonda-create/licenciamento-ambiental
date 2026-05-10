@@ -2399,16 +2399,33 @@ function openDetalhe(id) {
     <hr class="divider">
     <div class="section-label">Documentos do Processo</div>
     <div id="det-docs-lista" style="margin-bottom:10px;display:flex;flex-direction:column;gap:6px;min-height:24px">
-      ${(p.docs||[]).length === 0
-        ? '<span style="font-size:12px;color:var(--text3)">Nenhum documento anexado.</span>'
-        : (p.docs||[]).map(d => {
-            const nome = typeof d === 'object' ? d.nome : d;
-            const link = typeof d === 'object' ? d.link : null;
-            return link
-              ? `<a href="${link}" target="_blank" style="display:inline-flex;align-items:center;gap:7px;background:var(--accent-bg);border:1px solid var(--accent-border);color:var(--accent);padding:6px 12px;border-radius:8px;font-size:12px;text-decoration:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${nome} <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;opacity:0.6"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>`
-              : `<span style="display:inline-flex;align-items:center;gap:7px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:6px 12px;border-radius:8px;font-size:12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${nome}</span>`;
-          }).join('')
-      }
+      ${(() => {
+        // Coleta nomes que já aparecem no histórico como [DOCS] (enviados via mensagem)
+        const nomesEmMsgs = {};
+        (p.hist||[]).forEach(h => {
+          if (!h.t) return;
+          h.t.split('\n').filter(l => l.startsWith('[DOCS]')).forEach(ld => {
+            ld.replace('[DOCS] ','').split(';;').forEach(d => {
+              const n = d.split('||')[0];
+              if (n) nomesEmMsgs[n.trim()] = true;
+            });
+          });
+        });
+        // Exibe só docs que NÃO vieram de mensagens
+        const docsProcesso = (p.docs||[]).filter(d => {
+          const nome = typeof d === 'object' ? d.nome : d;
+          return !nomesEmMsgs[nome];
+        });
+        if (!docsProcesso.length)
+          return '<span style="font-size:12px;color:var(--text3)">Nenhum documento anexado.</span>';
+        return docsProcesso.map(d => {
+          const nome = typeof d === 'object' ? d.nome : d;
+          const link = typeof d === 'object' ? d.link : null;
+          return link
+            ? `<a href="${link}" target="_blank" style="display:inline-flex;align-items:center;gap:7px;background:var(--accent-bg);border:1px solid var(--accent-border);color:var(--accent);padding:6px 12px;border-radius:8px;font-size:12px;text-decoration:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${nome} <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px;opacity:0.6"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>`
+            : `<span style="display:inline-flex;align-items:center;gap:7px;background:var(--bg3);border:1px solid var(--border);color:var(--text2);padding:6px 12px;border-radius:8px;font-size:12px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;flex-shrink:0"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>${nome}</span>`;
+        }).join('');
+      })()}
     </div>
     <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--bg3);border:1px dashed var(--border2);border-radius:var(--radius);padding:9px 14px;margin-bottom:4px;transition:border-color 0.15s" onmouseenter="this.style.borderColor='var(--accent)'" onmouseleave="this.style.borderColor=''">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--accent);flex-shrink:0"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -2577,8 +2594,7 @@ async function enviarMensagem() {
         });
         if (res.ok) {
           docsEnviados.push({ nome: res.nome || f.name, link: res.link || '' });
-          if (!Array.isArray(p.docs)) p.docs = [];
-          p.docs.push({ nome: res.nome || f.name, link: res.link || '' });
+          // NÃO adiciona em p.docs — arquivo vai aparecer junto à mensagem no histórico
         } else { toast('Erro: ' + f.name, 'err'); }
       } catch(e) { toast('Falha: ' + f.name, 'err'); }
     }
@@ -2611,7 +2627,7 @@ async function enviarMensagem() {
   if (STATE.gasUrl) {
     try {
       await gasPOST('salvarHistorico', { proto: p.id, data: hoje, texto: textoHist });
-      if (docsEnviados.length) await gasPOST('salvarProcesso', { dados: p });
+      // Não salva p.docs — arquivos de mensagem ficam só no histórico
     } catch(e) { console.warn('Falha ao sincronizar:', e); }
   }
 }

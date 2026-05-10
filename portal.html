@@ -1806,6 +1806,18 @@ function renderProcessos() {
     return;
   }
   lista.innerHTML = PORTAL.processos.map(function(p) {
+    // Verifica mensagem não lida do técnico
+    var lidas = JSON.parse(localStorage.getItem(getMsgsLidasKey()) || '{}');
+    var temMsgNaoLida = (p.hist || []).some(function(h) {
+      if (!h.t || h.t.indexOf('[MSG]') !== 0) return false;
+      var chave = p.id + '_' + h.d + '_' + h.t.length;
+      return !lidas[chave];
+    });
+    var msgBadge = temMsgNaoLida
+      ? '<span style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;background:#ef4444;border-radius:50%;flex-shrink:0" title="Nova mensagem da SEMMA">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" style="width:11px;height:11px"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>' +
+        '</span>'
+      : '';
     return '<div class="proc-card" onclick="verDetalhe(\'' + p.id + '\')">' +
       '<div class="proc-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>' +
       '<div class="proc-card-info">' +
@@ -1814,6 +1826,7 @@ function renderProcessos() {
         '<div class="proc-card-data">Aberto em ' + fmtDate(p.data) + '</div>' +
       '</div>' +
       '<span class="pill ' + pilClass(p.status) + '">' + p.status + '</span>' +
+      msgBadge +
       '<div class="proc-card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><polyline points="9 18 15 12 9 6"/></svg></div>' +
     '</div>';
   }).join('');
@@ -1838,8 +1851,27 @@ async function verDetalhe(id) {
     ? '<div class="exigencia-box"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><p><strong>Exigência pendente:</strong> A SEMMA solicitou documentação complementar. Verifique o histórico de tramitação e anexe os documentos necessários abaixo.</p></div>'
     : '';
 
-  var docsHtml = docs.length
-    ? docs.map(function(d) {
+  // Documentos do processo (excluindo os enviados via mensagem - ficam no histórico)
+  // Coleta nomes de docs que já aparecem em [DOCS] do histórico para não duplicar
+  var nomesEmMensagens = {};
+  (hist || []).forEach(function(h) {
+    if (!h.t) return;
+    h.t.split('\n').filter(function(l) { return l.indexOf('[DOCS]') === 0; }).forEach(function(ld) {
+      ld.replace('[DOCS] ', '').split(';;').forEach(function(d) {
+        var n = d.split('||')[0];
+        if (n) nomesEmMensagens[n.trim()] = true;
+      });
+    });
+  });
+
+  // Apenas docs que não aparecem no histórico de mensagens
+  var docsProcesso = docs.filter(function(d) {
+    var nome = typeof d === 'object' ? d.nome : d;
+    return !nomesEmMensagens[nome];
+  });
+
+  var docsHtml = docsProcesso.length
+    ? docsProcesso.map(function(d) {
         var nome = typeof d === 'object' ? d.nome : d;
         var link = typeof d === 'object' ? d.link : null;
         return link
