@@ -1979,6 +1979,12 @@ async function loadData() {
         if (typeof p.docs  === 'string') try { p.docs  = JSON.parse(p.docs);  } catch(e) { p.docs  = []; }
         if (typeof p.conds === 'string') try { p.conds = JSON.parse(p.conds); } catch(e) { p.conds = []; }
         if (!Array.isArray(p.hist)) p.hist = [];
+        // Normaliza permitir_upload — Sheets retorna TRUE/FALSE como string
+        if (p.permitir_upload === 'TRUE' || p.permitir_upload === 'true' || p.permitir_upload === true) {
+          p.permitir_upload = true;
+        } else {
+          p.permitir_upload = false;
+        }
       });
 
       // Planilha vazia é estado normal — não carrega demo
@@ -2107,12 +2113,6 @@ function renderDash() {
 // ════════════════════════════════════════════
 // PROCESSOS
 // ════════════════════════════════════════════
-
-function setFilter(s) {
-  document.getElementById('f-status').value = s;
-  STATE.page = 1;
-  renderProcessos();
-}
 
 function renderProcessos() {
   const busca  = (document.getElementById('f-busca')?.value || '').toLowerCase();
@@ -2508,15 +2508,12 @@ async function enviarMensagem() {
 
 
 async function toggleUploadPermissao(id) {
-  console.log('[toggleUpload] chamado id=', id);
   const p = STATE.processos.find(x => x.id === id);
-  if (!p) { console.warn('[toggleUpload] processo não encontrado:', id); return; }
+  if (!p) return;
 
-  console.log('[toggleUpload] permitir_upload ANTES:', p.permitir_upload);
-  const atual = p.permitir_upload === true || p.permitir_upload === 'true';
+  const atual = p.permitir_upload === true || p.permitir_upload === 'true' || p.permitir_upload === 'TRUE';
   const novoValor = !atual;
   p.permitir_upload = novoValor;
-  console.log('[toggleUpload] permitir_upload DEPOIS:', p.permitir_upload);
 
   const hoje = new Date().toISOString().split('T')[0];
   const texto = novoValor
@@ -2541,35 +2538,37 @@ async function toggleUploadPermissao(id) {
 
 // Renderiza só o footer do modal de detalhe
 function renderDetFooter(p) {
-  const liberado  = p.permitir_upload === true || p.permitir_upload === 'true';
-  const btnClass  = liberado ? 'btn-amber' : 'btn-ghost';
-  const btnTitle  = liberado ? 'Upload liberado — clique para revogar' : 'Liberar envio de documentos pelo cidadão';
-  const btnLabel  = liberado ? 'Upload Liberado ✓' : 'Liberar Upload';
-  const btnEmitir = p.status === 'Aprovado'
-    ? `<button class="btn btn-primary" onclick="emitirLicenca('${p.id}')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-        Emitir Licença
-      </button>`
-    : '';
-  document.getElementById('det-footer').innerHTML = `
-    <button class="btn btn-ghost" onclick="exportarHistorico('${p.id}')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Exportar Histórico
-    </button>
-    <button class="btn btn-ghost" onclick="closeModal('m-detalhe')">Fechar</button>
-    <button class="btn btn-ghost" onclick="abrirMensagem('${p.id}')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-      Enviar Mensagem
-    </button>
-    <button class="btn ${btnClass}"
-      title="${btnTitle}"
-      onclick="toggleUploadPermissao('${p.id}')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      ${btnLabel}
-    </button>
-    <button class="btn btn-amber" onclick="closeModal('m-detalhe');openStatus('${p.id}')">Atualizar Status</button>
-    ${btnEmitir}
-  `;
+  const liberado = p.permitir_upload === true || p.permitir_upload === 'true' || p.permitir_upload === 'TRUE';
+  const footerEl = document.getElementById('det-footer');
+  if (!footerEl) return;
+
+  // Botão de upload: estilo visivelmente diferente conforme estado
+  const btnUploadStyle = liberado
+    ? 'background:#15803d;color:#fff;border:1px solid #15803d;font-weight:700'
+    : 'background:transparent;color:var(--text2);border:1px solid var(--border2)';
+  const btnUploadLabel = liberado ? '&#10003; Upload Liberado' : 'Liberar Upload';
+  const btnUploadTitle = liberado ? 'Upload liberado — clique para revogar' : 'Liberar envio de documentos pelo cidadão';
+
+  footerEl.innerHTML =
+    '<button class="btn btn-ghost" onclick="exportarHistorico(\'' + p.id + '\')">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
+      ' Exportar Histórico' +
+    '</button> ' +
+    '<button class="btn btn-ghost" onclick="closeModal(\'m-detalhe\')">Fechar</button> ' +
+    '<button class="btn btn-ghost" onclick="abrirMensagem(\'' + p.id + '\')">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>' +
+      ' Enviar Mensagem' +
+    '</button> ' +
+    '<button class="btn" style="' + btnUploadStyle + '" title="' + btnUploadTitle + '" onclick="toggleUploadPermissao(\'' + p.id + '\')">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>' +
+      ' ' + btnUploadLabel +
+    '</button> ' +
+    '<button class="btn btn-amber" onclick="closeModal(\'m-detalhe\');openStatus(\'' + p.id + '\')">Atualizar Status</button>' +
+    (p.status === 'Aprovado'
+      ? ' <button class="btn btn-primary" onclick="emitirLicenca(\'' + p.id + '\')">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>' +
+          ' Emitir Licença</button>'
+      : '');
 }
 
 
