@@ -1350,7 +1350,7 @@ tbody td {
             <div style="overflow-x:auto">
               <table>
                 <thead><tr>
-                  <th>Usuário</th><th>Nome</th><th>Perfil</th><th>Ações</th>
+                  <th>Usuário</th><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Ações</th>
                 </tr></thead>
                 <tbody id="usuarios-tbody"></tbody>
               </table>
@@ -1567,6 +1567,10 @@ tbody td {
         <div class="field span2">
           <label>Nome Completo <span class="req">*</span></label>
           <input id="usr-nome" placeholder="Nome do servidor" style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+        </div>
+        <div class="field span2">
+          <label>E-mail <span class="req">*</span></label>
+          <input id="usr-email" type="email" placeholder="servidor@serraredonda.pb.gov.br">
         </div>
         <div class="field span2">
           <label>Perfil de Acesso <span class="req">*</span></label>
@@ -3834,6 +3838,7 @@ function renderUsuarios() {
     return '<tr>' +
       '<td style="font-family:var(--font-mono);font-size:12px;white-space:nowrap">' + u.u + '</td>' +
       '<td style="font-weight:500">' + u.nome + '</td>' +
+      '<td style="font-size:12px;color:var(--text2)">' + (u.email || '<span style="color:var(--text3);font-style:italic">—</span>') + '</td>' +
       '<td><span style="background:var(--bg3);border:1px solid var(--border2);color:' + (perfilCor[u.perfil]||'var(--text2)') + ';padding:3px 10px;border-radius:99px;font-size:11px;font-family:var(--font-mono)">' + u.perfil + '</span></td>' +
       '<td><div class="actions-row">' +
         '<button class="icon-btn" title="Editar" onclick="editarUsuario(' + i + ')">' +
@@ -3847,10 +3852,11 @@ function renderUsuarios() {
 
 function openModalNovoUsuario() {
   document.getElementById('m-usuario-titulo').textContent = 'Novo Usuario';
-  document.getElementById('usr-login').value  = '';
-  document.getElementById('usr-senha').value  = '';
-  document.getElementById('usr-nome').value   = '';
-  document.getElementById('usr-perfil').value = 'Tecnico';
+  document.getElementById('usr-login').value   = '';
+  document.getElementById('usr-senha').value   = '';
+  document.getElementById('usr-nome').value    = '';
+  document.getElementById('usr-email').value   = '';
+  document.getElementById('usr-perfil').value  = 'Tecnico';
   document.getElementById('usr-edit-idx').value = '-1';
   document.getElementById('usr-login').removeAttribute('disabled');
   openModal('m-usuario');
@@ -3860,42 +3866,52 @@ function editarUsuario(idx) {
   var u = USUARIOS_LOCAL[idx];
   if (!u) return;
   document.getElementById('m-usuario-titulo').textContent = 'Editar Usuario';
-  document.getElementById('usr-login').value  = u.u;
-  document.getElementById('usr-senha').value  = u.p;
-  document.getElementById('usr-nome').value   = u.nome;
-  document.getElementById('usr-perfil').value = u.perfil;
+  document.getElementById('usr-login').value   = u.u;
+  document.getElementById('usr-senha').value   = u.p;
+  document.getElementById('usr-nome').value    = u.nome;
+  document.getElementById('usr-email').value   = u.email || '';
+  document.getElementById('usr-perfil').value  = u.perfil;
   document.getElementById('usr-edit-idx').value = idx;
   document.getElementById('usr-login').setAttribute('disabled', 'true');
   openModal('m-usuario');
 }
 
 async function salvarUsuario() {
-  var login  = document.getElementById('usr-login').value.trim().toLowerCase();
-  var senha  = document.getElementById('usr-senha').value.trim();
-  var nome   = document.getElementById('usr-nome').value.trim();
-  var perfil = document.getElementById('usr-perfil').value;
+  var login   = document.getElementById('usr-login').value.trim().toLowerCase();
+  var senha   = document.getElementById('usr-senha').value.trim();
+  var nome    = document.getElementById('usr-nome').value.trim();
+  var email   = document.getElementById('usr-email').value.trim().toLowerCase();
+  var perfil  = document.getElementById('usr-perfil').value;
   var editIdx = parseInt(document.getElementById('usr-edit-idx').value);
 
-  if (!login) { toast('Preencha o login.', 'err'); return; }
+  if (!login)  { toast('Preencha o login.', 'err'); return; }
   if (editIdx < 0 && !senha) { toast('Preencha a senha.', 'err'); return; }
   if (senha && senha.length < 6) { toast('Senha deve ter no minimo 6 caracteres.', 'err'); return; }
-  if (!nome) { toast('Preencha o nome.', 'err'); return; }
+  if (!nome)   { toast('Preencha o nome.', 'err'); return; }
+  if (!email || email.indexOf('@') < 0) { toast('Preencha um e-mail válido.', 'err'); return; }
 
   if (editIdx >= 0) {
     USUARIOS_LOCAL[editIdx].nome   = nome;
+    USUARIOS_LOCAL[editIdx].email  = email;
     USUARIOS_LOCAL[editIdx].perfil = perfil;
     if (senha) USUARIOS_LOCAL[editIdx].p = senha;
   } else {
     if (USUARIOS_LOCAL.find(function(x) { return x.u === login; })) {
       toast('Login ja existe. Escolha outro.', 'err'); return;
     }
-    USUARIOS_LOCAL.push({ u: login, p: senha, nome: nome, perfil: perfil });
+    USUARIOS_LOCAL.push({ u: login, p: senha, nome: nome, email: email, perfil: perfil });
   }
 
   // Sincroniza com GAS
   if (STATE.gasUrl) {
     try {
-      await gasPOST('salvarUsuario', { usuario: login, senha: senha || USUARIOS_LOCAL[editIdx].p, nome: nome, perfil: perfil });
+      await gasPOST('salvarUsuario', {
+        usuario: login,
+        senha:   senha || (editIdx >= 0 ? USUARIOS_LOCAL[editIdx].p : ''),
+        nome:    nome,
+        email:   email,
+        perfil:  perfil
+      });
     } catch(e) { console.warn('GAS: nao foi possivel sincronizar usuario:', e); }
   }
 
