@@ -724,6 +724,7 @@ tbody td {
   font-variant-numeric: tabular-nums;
 }
 
+.pagination {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -816,6 +817,16 @@ tbody td {
   margin-bottom: 2px;
 }
 
+/* Número do processo no header do detalhe — fonte mono igual à tabela */
+#det-proto {
+  font-family: var(--font-mono) !important;
+  font-size: 13px !important;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.01em;
+  margin-bottom: 3px;
+}
+
 .modal-header p {
   font-family: var(--font-mono);
   font-size: 11px;
@@ -840,11 +851,26 @@ tbody td {
 .modal-body { padding: 24px; }
 
 .modal-footer {
-  padding: 16px 24px;
+  padding: 12px 20px;
   border-top: 1px solid var(--border);
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+/* Botões do footer do detalhe — menores para caber na mesma linha */
+#det-footer .btn {
+  padding: 8px 12px;
+  font-size: 12px;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+#det-footer .btn svg {
+  width: 12px;
+  height: 12px;
 }
 
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -1100,6 +1126,11 @@ tbody td {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         Com Exigência
         <span class="nav-badge" id="nb-exigencia">0</span>
+      </div>
+      <div class="nav-item" onclick="goTo('processos',this);setFilter('msg-cidadao')" title="Processos com mensagens não lidas do solicitante">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        Mensagens
+        <span class="nav-badge" id="nb-msgs-cidadao" style="background:var(--red);display:none">0</span>
       </div>
       <div class="nav-item" onclick="openModalNovo()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
@@ -1465,6 +1496,42 @@ tbody td {
     </div>
   </div>
 </div>
+<!-- MODAL MENSAGEM -->
+<div class="overlay" id="m-mensagem">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <div>
+        <h2>Enviar Mensagem ao Solicitante</h2>
+        <p id="m-msg-proto" style="font-family:var(--font-mono);font-size:11px;color:var(--text3)">—</p>
+      </div>
+      <button class="modal-close" onclick="closeModal('m-mensagem')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--radius);padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--accent)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;vertical-align:middle;margin-right:5px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        A mensagem ficará visível para o solicitante no Portal do Cidadão, destacada no histórico de tramitação.
+      </div>
+      <div class="field">
+        <label>Mensagem <span class="req">*</span></label>
+        <textarea id="msg-texto" rows="5" placeholder="Digite aqui a mensagem para o solicitante. Ex: Documentos recebidos. Solicito envio da planta baixa assinada pelo responsável técnico." style="resize:vertical"></textarea>
+      </div>
+      <div class="field" style="margin-top:8px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:400">
+          <input type="checkbox" id="msg-liberar-upload" style="width:16px;height:16px;accent-color:var(--accent)">
+          Liberar envio de documentos pelo solicitante ao enviar esta mensagem
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('m-mensagem')">Cancelar</button>
+      <button class="btn btn-primary" onclick="enviarMensagem()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        Enviar Mensagem
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL USUARIO -->
 <div class="overlay" id="m-usuario">
   <div class="modal" style="max-width:480px">
@@ -1673,8 +1740,8 @@ tbody td {
   <div class="modal modal-lg">
     <div class="modal-header">
       <div>
-        <h2 id="det-proto">—</h2>
-        <p id="det-sub">—</p>
+        <p id="det-proto" style="font-family:var(--font-mono);font-size:11px;color:var(--accent);font-weight:600;margin-bottom:3px;letter-spacing:0.02em">—</p>
+        <h2 id="det-sub" style="font-size:15px">—</h2>
       </div>
       <button class="modal-close" onclick="closeModal('m-detalhe')">✕</button>
     </div>
@@ -1935,7 +2002,6 @@ async function loadData() {
 
 function updateBadges() {
   const p = STATE.processos;
-  const nb = id => { const el = document.getElementById(id); if (el) el.textContent = 0; };
   document.getElementById('nb-total').textContent      = p.length;
   document.getElementById('nb-analise').textContent    = p.filter(x => x.status === 'Em Análise').length;
   document.getElementById('nb-exigencia').textContent  = p.filter(x => x.status === 'Exigência').length;
@@ -1944,13 +2010,55 @@ function updateBadges() {
   if (ag) ag.textContent = p.filter(x => x.status === 'Aguardando Documentos').length;
   const ap = document.getElementById('nb-aprovado');
   if (ap) ap.textContent = p.filter(x => x.status === 'Aprovado').length;
+
+  // Conta processos com mensagens não lidas do cidadão [CID]
+  const LIDAS_KEY = 'sema_tec_msgs_lidas_' + (STATE.user ? STATE.user.u : '');
+  const lidas = JSON.parse(localStorage.getItem(LIDAS_KEY) || '{}');
+  let totalMsgs = 0;
+  p.forEach(proc => {
+    const temMsgNaoLida = (proc.hist || []).some(h => {
+      if (!h.t || !h.t.startsWith('[CID]')) return false;
+      const chave = proc.id + '_' + h.d + '_' + h.t.length;
+      return !lidas[chave];
+    });
+    if (temMsgNaoLida) totalMsgs++;
+  });
+  const nbMsg = document.getElementById('nb-msgs-cidadao');
+  if (nbMsg) {
+    nbMsg.textContent = totalMsgs;
+    nbMsg.style.display = totalMsgs > 0 ? '' : 'none';
+  }
+}
+
+// Marca mensagens do cidadão como lidas ao abrir processo
+function marcarMsgsCidadaoLidas(id) {
+  const p = STATE.processos.find(x => x.id === id);
+  if (!p) return;
+  const LIDAS_KEY = 'sema_tec_msgs_lidas_' + (STATE.user ? STATE.user.u : '');
+  const lidas = JSON.parse(localStorage.getItem(LIDAS_KEY) || '{}');
+  (p.hist || []).forEach(h => {
+    if (h.t && h.t.startsWith('[CID]')) {
+      lidas[p.id + '_' + h.d + '_' + h.t.length] = true;
+    }
+  });
+  localStorage.setItem(LIDAS_KEY, JSON.stringify(lidas));
+  updateBadges();
 }
 
 function setFilter(s) {
-  const fStatus = document.getElementById('f-status');
-  if (fStatus) fStatus.value = s;
   STATE.page = 1;
-  // Garante renderização mesmo se a tela já estava ativa
+  if (s === 'msg-cidadao') {
+    // Filtro especial: mostra só processos com mensagens do cidadão não lidas
+    const LIDAS_KEY = 'sema_tec_msgs_lidas_' + (STATE.user ? STATE.user.u : '');
+    const lidas = JSON.parse(localStorage.getItem(LIDAS_KEY) || '{}');
+    STATE.filtroMsgCidadao = true;
+    const fStatus = document.getElementById('f-status');
+    if (fStatus) fStatus.value = '';
+  } else {
+    STATE.filtroMsgCidadao = false;
+    const fStatus = document.getElementById('f-status');
+    if (fStatus) fStatus.value = s;
+  }
   renderProcessos();
 }
 
@@ -2011,16 +2119,37 @@ function renderProcessos() {
   const tipo   = document.getElementById('f-tipo')?.value || '';
   const status = document.getElementById('f-status')?.value || '';
 
+  const LIDAS_KEY = 'sema_tec_msgs_lidas_' + (STATE.user ? STATE.user.u : '');
+  const lidas = JSON.parse(localStorage.getItem(LIDAS_KEY) || '{}');
+
   let list = STATE.processos;
   if (busca)  list = list.filter(p => p.id.toLowerCase().includes(busca) || p.req.toLowerCase().includes(busca));
   if (tipo)   list = list.filter(p => p.tipo === tipo);
   if (status) list = list.filter(p => p.status === status);
 
+  // Filtro especial: só processos com mensagens não lidas do cidadão
+  if (STATE.filtroMsgCidadao) {
+    list = list.filter(p => (p.hist || []).some(h => {
+      if (!h.t || !h.t.startsWith('[CID]')) return false;
+      return !lidas[p.id + '_' + h.d + '_' + h.t.length];
+    }));
+  }
+
   const total = list.length;
   const ini = (STATE.page - 1) * PER_PAGE;
   const page = list.slice(ini, ini + PER_PAGE);
 
-  document.getElementById('proc-tbody').innerHTML = page.map(p => `
+  document.getElementById('proc-tbody').innerHTML = page.map(p => {
+    // Verifica se tem mensagem não lida do cidadão
+    const temMsgNaoLida = (p.hist || []).some(h => {
+      if (!h.t || !h.t.startsWith('[CID]')) return false;
+      return !lidas[p.id + '_' + h.d + '_' + h.t.length];
+    });
+    const msgBadge = temMsgNaoLida
+      ? `<span title="Mensagem não lida do solicitante" style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;background:#ef4444;border-radius:50%;margin-left:4px;flex-shrink:0">
+           <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" style="width:10px;height:10px"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+         </span>` : '';
+    return `
     <tr>
       <td style="white-space:nowrap"><span class="proto">${p.id}</span></td>
       <td style="font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.req}</td>
@@ -2028,7 +2157,7 @@ function renderProcessos() {
       <td>${chipTipo(p.tipo)}</td>
       <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text2)">${p.ativ}</td>
       <td style="font-family:var(--font-mono);font-size:11px;color:var(--text3);white-space:nowrap">${fmtDate(p.data)}</td>
-      <td>${statusPill(p.status)}</td>
+      <td><div style="display:flex;align-items:center;gap:2px">${statusPill(p.status)}${msgBadge}</div></td>
       <td>
         <div class="actions-row">
           <button class="icon-btn" title="Detalhes" onclick="openDetalhe('${p.id}')">
@@ -2039,8 +2168,8 @@ function renderProcessos() {
           </button>
         </div>
       </td>
-    </tr>
-  `).join('') || `<tr><td colspan="8">${emptyRow(8, true)}</td></tr>`;
+    </tr>`;
+  }).join('') || `<tr><td colspan="8">${emptyRow(8, true)}</td></tr>`;
 
   document.getElementById('pag-info').textContent = `${total} processo${total !== 1 ? 's' : ''}`;
 
@@ -2214,6 +2343,9 @@ function openDetalhe(id) {
   if (!p) return;
   STATE.activeId = id;
 
+  // Marca mensagens do cidadão como lidas
+  marcarMsgsCidadaoLidas(id);
+
   document.getElementById('det-proto').textContent = p.id;
   document.getElementById('det-sub').textContent = `${p.tipo} — ${p.ativ}`;
 
@@ -2279,45 +2411,112 @@ function openDetalhe(id) {
     <hr class="divider">
     <div class="section-label">Histórico de Tramitação</div>
     <ul class="timeline">
-      ${(p.hist||[]).slice().reverse().map(h => `
-        <li class="tl-item">
+      ${(p.hist||[]).slice().reverse().map(h => {
+        const isMsg = h.t && h.t.startsWith('[MSG]');
+        const isCid = h.t && h.t.startsWith('[CID]');
+        const texto = isMsg ? h.t.replace(/^\[MSG\]\s*/, '') : isCid ? h.t.replace(/^\[CID\]\s*/, '') : h.t;
+        if (isMsg) {
+          return `<li class="tl-item">
+            <div class="tl-date">${fmtDate(h.d)}</div>
+            <div style="background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--radius);padding:10px 12px;margin-top:4px">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+                <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" style="width:13px;height:13px;flex-shrink:0"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                <span style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.06em;font-family:var(--font-mono)">Mensagem enviada ao solicitante</span>
+              </div>
+              <div class="tl-text" style="color:var(--text)">${texto}</div>
+            </div>
+          </li>`;
+        }
+        if (isCid) {
+          return `<li class="tl-item">
+            <div class="tl-date">${fmtDate(h.d)}</div>
+            <div style="background:#eff6ff;border:1px solid #93c5fd;border-radius:var(--radius);padding:10px 12px;margin-top:4px">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#1d4ed8" stroke-width="2" style="width:13px;height:13px;flex-shrink:0"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <span style="font-size:10px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:0.06em;font-family:var(--font-mono)">Mensagem do solicitante</span>
+              </div>
+              <div class="tl-text" style="color:var(--text)">${texto}</div>
+            </div>
+          </li>`;
+        }
+        return `<li class="tl-item">
           <div class="tl-date">${fmtDate(h.d)}</div>
           <div class="tl-text">${h.t}</div>
-        </li>
-      `).join('')}
+        </li>`;
+      }).join('')}
     </ul>
   `;
 
-  document.getElementById('det-footer').innerHTML = `
-    <button class="btn btn-ghost" onclick="exportarHistorico('${p.id}')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Exportar Histórico
-    </button>
-    <button class="btn btn-ghost" onclick="closeModal('m-detalhe')">Fechar</button>
-    <button class="btn ${p.permitir_upload ? 'btn-amber' : 'btn-ghost'}" title="${p.permitir_upload ? 'Upload liberado — clique para revogar' : 'Liberar envio de documentos pelo cidadão'}" onclick="toggleUploadPermissao('${p.id}')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      ${p.permitir_upload ? 'Upload Liberado ✓' : 'Liberar Upload'}
-    </button>
-    <button class="btn btn-amber" onclick="closeModal('m-detalhe');openStatus('${p.id}')">Atualizar Status</button>
-    ${p.status === 'Aprovado' ? `<button class="btn btn-primary" onclick="emitirLicenca('${p.id}')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-      Emitir Licença
-    </button>` : ''}
-  `;
+  renderDetFooter(p);
 
   openModal('m-detalhe');
 }
 
 // ════════════════════════════════════════════
-// LIBERAR UPLOAD PARA O CIDADÃO
+// MENSAGEM PARA O SOLICITANTE
 // ════════════════════════════════════════════
 
-async function toggleUploadPermissao(id) {
+function abrirMensagem(id) {
   const p = STATE.processos.find(x => x.id === id);
   if (!p) return;
+  STATE.activeId = id;
+  document.getElementById('m-msg-proto').textContent = `${p.id} — ${p.req}`;
+  document.getElementById('msg-texto').value = '';
+  document.getElementById('msg-liberar-upload').checked = false;
+  closeModal('m-detalhe');
+  openModal('m-mensagem');
+}
 
-  const novoValor = !p.permitir_upload;
+async function enviarMensagem() {
+  const texto = document.getElementById('msg-texto').value.trim();
+  const liberarUpload = document.getElementById('msg-liberar-upload').checked;
+  if (!texto) { toast('Digite a mensagem antes de enviar.', 'err'); return; }
+
+  const p = STATE.processos.find(x => x.id === STATE.activeId);
+  if (!p) return;
+
+  const hoje = new Date().toISOString().split('T')[0];
+  // Prefixo [MSG] identifica mensagens do técnico no histórico
+  const textoHist = `[MSG] ${STATE.user.name}: ${texto}`;
+
+  p.hist = p.hist || [];
+  p.hist.push({ d: hoje, t: textoHist });
+
+  // Libera upload se marcado
+  if (liberarUpload) {
+    p.permitir_upload = true;
+    p.hist.push({ d: hoje, t: `Upload de documentos liberado pelo técnico ${STATE.user.name}.` });
+  }
+
+  closeModal('m-mensagem');
+  toast('Mensagem enviada ao solicitante!', 'ok');
+
+  // Reabre o detalhe para mostrar a mensagem no histórico
+  setTimeout(() => openDetalhe(p.id), 200);
+
+  if (STATE.gasUrl) {
+    try {
+      await gasPOST('salvarHistorico', { proto: p.id, data: hoje, texto: textoHist });
+      if (liberarUpload) {
+        await gasPOST('salvarProcesso', { dados: p });
+        await gasPOST('salvarHistorico', { proto: p.id, data: hoje, texto: `Upload de documentos liberado pelo tecnico ${STATE.user.name}.` });
+      }
+    } catch(e) { console.warn('Falha ao sincronizar mensagem:', e); }
+  }
+}
+
+
+
+async function toggleUploadPermissao(id) {
+  console.log('[toggleUpload] chamado id=', id);
+  const p = STATE.processos.find(x => x.id === id);
+  if (!p) { console.warn('[toggleUpload] processo não encontrado:', id); return; }
+
+  console.log('[toggleUpload] permitir_upload ANTES:', p.permitir_upload);
+  const atual = p.permitir_upload === true || p.permitir_upload === 'true';
+  const novoValor = !atual;
   p.permitir_upload = novoValor;
+  console.log('[toggleUpload] permitir_upload DEPOIS:', p.permitir_upload);
 
   const hoje = new Date().toISOString().split('T')[0];
   const texto = novoValor
@@ -2327,9 +2526,10 @@ async function toggleUploadPermissao(id) {
   p.hist = p.hist || [];
   p.hist.push({ d: hoje, t: texto });
 
-  // Reatualiza o modal sem fechar
-  openDetalhe(id);
-  toast(novoValor ? 'Upload liberado para o cidadão.' : 'Upload revogado.', 'ok');
+  // Atualiza só o footer — sem fechar nem reabrir o modal
+  renderDetFooter(p);
+
+  toast(novoValor ? '✓ Upload liberado para o cidadão.' : 'Upload revogado.', novoValor ? 'ok' : 'warn');
 
   if (STATE.gasUrl) {
     try {
@@ -2337,6 +2537,39 @@ async function toggleUploadPermissao(id) {
       await gasPOST('salvarHistorico', { proto: p.id, data: hoje, texto });
     } catch(e) { console.warn('Falha ao sincronizar:', e); }
   }
+}
+
+// Renderiza só o footer do modal de detalhe
+function renderDetFooter(p) {
+  const liberado  = p.permitir_upload === true || p.permitir_upload === 'true';
+  const btnClass  = liberado ? 'btn-amber' : 'btn-ghost';
+  const btnTitle  = liberado ? 'Upload liberado — clique para revogar' : 'Liberar envio de documentos pelo cidadão';
+  const btnLabel  = liberado ? 'Upload Liberado ✓' : 'Liberar Upload';
+  const btnEmitir = p.status === 'Aprovado'
+    ? `<button class="btn btn-primary" onclick="emitirLicenca('${p.id}')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+        Emitir Licença
+      </button>`
+    : '';
+  document.getElementById('det-footer').innerHTML = `
+    <button class="btn btn-ghost" onclick="exportarHistorico('${p.id}')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Exportar Histórico
+    </button>
+    <button class="btn btn-ghost" onclick="closeModal('m-detalhe')">Fechar</button>
+    <button class="btn btn-ghost" onclick="abrirMensagem('${p.id}')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      Enviar Mensagem
+    </button>
+    <button class="btn ${btnClass}"
+      title="${btnTitle}"
+      onclick="toggleUploadPermissao('${p.id}')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      ${btnLabel}
+    </button>
+    <button class="btn btn-amber" onclick="closeModal('m-detalhe');openStatus('${p.id}')">Atualizar Status</button>
+    ${btnEmitir}
+  `;
 }
 
 
