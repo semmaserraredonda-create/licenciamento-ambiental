@@ -1611,28 +1611,117 @@ function gerarBlocoUpload(p) {
 
 
 
+// ── UPLOAD INTEGRADO À MENSAGEM ──────────────────────────────────────
+
+var ARQUIVOS_MENSAGEM = [];
+
+function selecionarArquivosMensagem(input, proto) {
+  ARQUIVOS_MENSAGEM = Array.from(input.files);
+  input.value = '';
+  var statusId = 'upload-status-' + proto.replace(/[^a-z0-9]/gi, '-');
+  var countEl  = document.getElementById(statusId + '-count');
+  var listaEl  = document.getElementById(statusId + '-lista');
+
+  if (countEl) countEl.textContent = ARQUIVOS_MENSAGEM.length > 0 ? ARQUIVOS_MENSAGEM.length + ' arquivo(s)' : '';
+
+  if (listaEl) {
+    listaEl.innerHTML = ARQUIVOS_MENSAGEM.map(function(f, i) {
+      var kb = (f.size / 1024).toFixed(0);
+      return '<div style="display:flex;align-items:center;gap:8px;background:var(--verde-lt);border:1px solid rgba(21,128,61,0.15);border-radius:8px;padding:6px 10px">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="var(--verde)" stroke-width="2" style="width:13px;height:13px;flex-shrink:0"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' +
+        '<span style="flex:1;font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + f.name + '</span>' +
+        '<span style="font-size:11px;color:var(--text3);flex-shrink:0">' + kb + 'KB</span>' +
+        '<button onclick="removerArquivoMensagem(' + i + ',\'' + proto + '\')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;line-height:1;padding:0;flex-shrink:0">&#x2715;</button>' +
+      '</div>';
+    }).join('');
+  }
+}
+
+function removerArquivoMensagem(idx, proto) {
+  ARQUIVOS_MENSAGEM.splice(idx, 1);
+  selecionarArquivosMensagem({ files: [], value: '' }, proto);
+  // Re-lista com o array atual
+  var statusId = 'upload-status-' + proto.replace(/[^a-z0-9]/gi, '-');
+  var countEl  = document.getElementById(statusId + '-count');
+  var listaEl  = document.getElementById(statusId + '-lista');
+  if (countEl) countEl.textContent = ARQUIVOS_MENSAGEM.length > 0 ? ARQUIVOS_MENSAGEM.length + ' arquivo(s)' : '';
+  if (listaEl) {
+    listaEl.innerHTML = ARQUIVOS_MENSAGEM.map(function(f, i) {
+      var kb = (f.size / 1024).toFixed(0);
+      return '<div style="display:flex;align-items:center;gap:8px;background:var(--verde-lt);border:1px solid rgba(21,128,61,0.15);border-radius:8px;padding:6px 10px">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="var(--verde)" stroke-width="2" style="width:13px;height:13px;flex-shrink:0"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>' +
+        '<span style="flex:1;font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + f.name + '</span>' +
+        '<span style="font-size:11px;color:var(--text3);flex-shrink:0">' + kb + 'KB</span>' +
+        '<button onclick="removerArquivoMensagem(' + i + ',\'' + proto + '\')" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;line-height:1;padding:0;flex-shrink:0">&#x2715;</button>' +
+      '</div>';
+    }).join('');
+  }
+}
+
 async function enviarMensagemCidadao(proto) {
   var textarea = document.getElementById('cid-msg-texto');
-  var texto = textarea ? textarea.value.trim() : '';
-  if (!texto) { toast('Digite uma mensagem antes de enviar.', 'err'); return; }
+  var texto    = textarea ? textarea.value.trim() : '';
+  var arquivos = ARQUIVOS_MENSAGEM.slice();
 
-  var hoje = new Date().toISOString().split('T')[0];
-  var nomeRem = PORTAL.user ? PORTAL.user.nome : 'Solicitante';
-  var textoHist = '[CID] ' + nomeRem + ': ' + texto;
-
-  var p = PORTAL.processos.find(function(x) { return x.id === proto; });
-  if (p) {
-    if (!Array.isArray(p.hist)) p.hist = [];
-    p.hist.push({ d: hoje, t: textoHist });
+  if (!texto && !arquivos.length) {
+    toast('Digite uma mensagem ou anexe um arquivo antes de enviar.', 'err');
+    return;
   }
 
-  if (textarea) textarea.value = '';
-  toast('Mensagem enviada à SEMMA!', 'ok');
-  setTimeout(function() { verDetalhe(proto); }, 200);
+  var hoje    = new Date().toISOString().split('T')[0];
+  var nomeRem = PORTAL.user ? PORTAL.user.nome : 'Solicitante';
+  var p       = PORTAL.processos.find(function(x) { return x.id === proto; });
 
-  try {
-    await gasPost('salvarHistorico', { proto: proto, data: hoje, texto: textoHist });
-  } catch(e) { console.warn('Falha ao enviar mensagem:', e); }
+  // Envia arquivos primeiro se houver
+  if (arquivos.length) {
+    showLoad('Enviando ' + arquivos.length + ' arquivo(s)...');
+    var enviados = 0;
+    for (var i = 0; i < arquivos.length; i++) {
+      try {
+        var b64 = await fileToBase64Portal(arquivos[i]);
+        var res = await gasPost('uploadDocumento', {
+          proto: proto,
+          nome: arquivos[i].name,
+          dados: b64,
+          mimeType: arquivos[i].type || 'application/octet-stream'
+        });
+        if (res.ok) {
+          if (p) {
+            if (!Array.isArray(p.docs)) p.docs = [];
+            p.docs.push({ nome: res.nome || arquivos[i].name, link: res.link || '' });
+          }
+          enviados++;
+        } else {
+          toast('Erro ao enviar ' + arquivos[i].name, 'err');
+        }
+      } catch(e) { toast('Falha: ' + arquivos[i].name, 'err'); }
+    }
+    hideLoad();
+    if (enviados > 0 && p) await gasPost('salvarProcesso', { dados: p });
+  }
+
+  // Envia mensagem se houver texto
+  if (texto) {
+    var textoHist = '[CID] ' + nomeRem + ': ' + texto;
+    if (p) {
+      if (!Array.isArray(p.hist)) p.hist = [];
+      p.hist.push({ d: hoje, t: textoHist });
+    }
+    try {
+      await gasPost('salvarHistorico', { proto: proto, data: hoje, texto: textoHist });
+    } catch(e) { console.warn('Falha ao salvar mensagem:', e); }
+  }
+
+  // Limpa campos
+  if (textarea) textarea.value = '';
+  ARQUIVOS_MENSAGEM = [];
+
+  var partes = [];
+  if (texto) partes.push('Mensagem enviada!');
+  if (arquivos.length) partes.push(arquivos.length + ' arquivo(s) anexado(s)!');
+  toast(partes.join(' '), 'ok');
+
+  setTimeout(function() { verDetalhe(proto); }, 300);
 }
 
 // ── BADGE DE MENSAGEM NÃO LIDA ───────────────────────────────────────
@@ -1795,27 +1884,47 @@ async function verDetalhe(id) {
       '<div class="section-title">Documentos Anexados</div>' +
       '<div style="margin-bottom:12px">' + docsHtml + '</div>' +
 
-      // Upload condicional: Exigencia ou permitir_upload liberado pelo tecnico
-      gerarBlocoUpload(p) +
-
       '<hr class="divider">' +
       '<div class="section-title">Histórico de Tramitação</div>' +
       histHtml +
 
-      // Caixa de envio de mensagem pelo cidadão
-      (p.status !== 'Emitido' && p.status !== 'Indeferido' ? (
-        '<hr class="divider">' +
-        '<div class="section-title">Enviar Mensagem à SEMMA</div>' +
-        '<div style="display:flex;flex-direction:column;gap:8px">' +
-          '<textarea id="cid-msg-texto" rows="3" placeholder="Escreva sua mensagem para a SEMMA... Ex: Solicitando esclarecimento sobre a documentação necessária." style="width:100%;background:#fff;border:1.5px solid var(--border2);border-radius:var(--radius);padding:11px 14px;font-family:var(--ff-body);font-size:13px;color:var(--text);outline:none;resize:vertical;box-sizing:border-box" onfocus="this.style.borderColor=\'var(--verde2)\'" onblur="this.style.borderColor=\'var(--border2)\'"></textarea>' +
-          '<div style="display:flex;justify-content:flex-end">' +
-            '<button class="btn btn-primary btn-sm" onclick="enviarMensagemCidadao(\'' + p.id + '\')">' +
-              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>' +
-              'Enviar Mensagem' +
-            '</button>' +
-          '</div>' +
-        '</div>'
-      ) : '') +
+      // Caixa de envio de mensagem + ícone de anexar
+      (p.status !== 'Emitido' && p.status !== 'Indeferido' ? (function() {
+        var uploadId  = 'upload-proc-' + p.id.replace(/[^a-z0-9]/gi, '-');
+        var statusId  = 'upload-status-' + p.id.replace(/[^a-z0-9]/gi, '-');
+        return '<hr class="divider">' +
+          '<div class="section-title">Enviar Mensagem à SEMMA</div>' +
+          '<div style="display:flex;flex-direction:column;gap:8px">' +
+            '<textarea id="cid-msg-texto" rows="3"' +
+              ' placeholder="Escreva sua mensagem para a SEMMA..."' +
+              ' style="width:100%;background:#fff;border:1.5px solid var(--border2);border-radius:var(--radius);padding:11px 14px;font-family:var(--ff-body);font-size:13px;color:var(--text);outline:none;resize:vertical;box-sizing:border-box"' +
+              ' onfocus="this.style.borderColor=\'var(--verde2)\'" onblur="this.style.borderColor=\'var(--border2)\'"></textarea>' +
+
+            // Lista de arquivos selecionados
+            '<div id="' + statusId + '-lista" style="display:flex;flex-direction:column;gap:4px"></div>' +
+
+            '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px">' +
+              // Ícone de clipe para anexar
+              '<label for="' + uploadId + '" title="Anexar documentos"' +
+                ' style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;padding:8px 12px;border:1.5px solid var(--border2);border-radius:var(--radius);font-size:13px;color:var(--text2);transition:all 0.15s"' +
+                ' onmouseenter="this.style.borderColor=\'var(--verde2)\';this.style.color=\'var(--verde2)\'"' +
+                ' onmouseleave="this.style.borderColor=\'var(--border2)\';this.style.color=\'var(--text2)\'">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px">' +
+                  '<path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>' +
+                '</svg>' +
+                '<span id="' + statusId + '-count"></span>' +
+                '<input type="file" id="' + uploadId + '" multiple' +
+                  ' accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx"' +
+                  ' style="display:none" onchange="selecionarArquivosMensagem(this,\'' + p.id + '\')">' +
+              '</label>' +
+
+              '<button class="btn btn-primary btn-sm" onclick="enviarMensagemCidadao(\'' + p.id + '\')">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>' +
+                ' Enviar' +
+              '</button>' +
+            '</div>' +
+          '</div>';
+      })() : '') +
 
     '</div>';
 }
