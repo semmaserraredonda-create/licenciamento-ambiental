@@ -760,6 +760,50 @@ body { font-family: var(--ff-body); background: var(--bg); color: var(--text); m
 
 <div class="toast-wrap" id="toast-wrap"></div>
 
+<!-- ══ CONSULTA PÚBLICA ══ -->
+<div id="tela-verificar" style="display:none;min-height:100vh;background:var(--bg);align-items:center;justify-content:center;padding:32px 16px">
+  <div style="width:100%;max-width:560px">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="display:inline-flex;align-items:center;justify-content:center;width:52px;height:52px;background:var(--verde);border-radius:14px;margin-bottom:12px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#86efac" stroke-width="2" style="width:26px;height:26px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <h2 style="font-family:var(--ff-display);font-size:22px;font-weight:700;color:var(--text);margin-bottom:4px">Consulta de Licença</h2>
+      <p style="font-size:13px;color:var(--text2)">SEMMA — Serra Redonda/PB</p>
+    </div>
+
+    <div id="ver-loading" style="text-align:center;padding:32px;color:var(--text2);font-size:14px">Consultando licença...</div>
+
+    <div id="ver-card" style="display:none;background:#fff;border:1.5px solid var(--border2);border-radius:var(--radius2);overflow:hidden;box-shadow:var(--shadow)">
+      <div id="ver-header" style="padding:20px 24px 16px;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div>
+            <div id="ver-num" style="font-family:var(--ff-mono);font-size:18px;font-weight:600;color:var(--verde);margin-bottom:2px"></div>
+            <div id="ver-tipo" style="font-size:13px;color:var(--text2)"></div>
+          </div>
+          <span id="ver-status-badge" style="font-family:var(--ff-mono);font-size:12px;padding:5px 14px;border-radius:99px;font-weight:600;flex-shrink:0"></span>
+        </div>
+      </div>
+      <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div><div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Requerente</div><div id="ver-req" style="font-size:13px;font-weight:500;color:var(--text)"></div></div>
+          <div><div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">CPF/CNPJ</div><div id="ver-doc" style="font-size:13px;font-family:var(--ff-mono);color:var(--text)"></div></div>
+          <div><div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Atividade</div><div id="ver-ativ" style="font-size:13px;color:var(--text)"></div></div>
+          <div><div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Protocolo</div><div id="ver-proto" style="font-size:13px;font-family:var(--ff-mono);color:var(--text)"></div></div>
+          <div><div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Emissão</div><div id="ver-emissao" style="font-size:13px;color:var(--text)"></div></div>
+          <div><div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px">Vencimento</div><div id="ver-validade" style="font-size:13px;font-weight:600;color:var(--text)"></div></div>
+        </div>
+        <div id="ver-dias" style="font-size:12px;color:var(--text2);padding:8px 12px;background:var(--bg);border-radius:8px;text-align:center"></div>
+      </div>
+    </div>
+
+    <div id="ver-erro" style="display:none;text-align:center;padding:32px;color:var(--red);font-size:14px"></div>
+
+    <div style="text-align:center;margin-top:20px">
+      <a href="portal.html" style="font-size:13px;color:var(--verde2);text-decoration:none;font-weight:500">&#8592; Ir para o Portal do Cidadão</a>
+    </div>
+  </div>
+</div>
+
 <!-- ══ TELA DE LOGIN / CADASTRO ══ -->
 <div id="tela-login">
   <div class="login-left">
@@ -2506,6 +2550,10 @@ async function submeterRequerimento() {
   var hoje = new Date().toISOString().split('T')[0];
   var ano  = new Date().getFullYear();
   var id   = 'SEMA-' + ano + '-P' + String(Date.now()).slice(-4);
+  try {
+    var rProto = await gasPost('proximoProtocolo', {});
+    if (rProto && rProto.ok) id = rProto.id;
+  } catch(e) { console.warn('Falha ao obter protocolo do GAS:', e); }
 
   var np = {
     id:    id,
@@ -2825,6 +2873,83 @@ function fmtCoordPortal(input, isLat) {
     input.value = g+String.fromCharCode(176)+String(m).padStart(2,'0')+"'"+String(s).padStart(2,'0')+'"'+dir;
   }
 }
+
+// ── CONSULTA PÚBLICA ──
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var numLic = params.get('verificar');
+  if (!numLic) return;
+
+  // Mostra tela de consulta, esconde login
+  var tvEl = document.getElementById('tela-verificar');
+  var tlEl = document.getElementById('tela-login');
+  if (tvEl) tvEl.style.display = 'flex';
+  if (tlEl) tlEl.style.display = 'none';
+
+  // Busca dados da licença
+  gasGet('verificarLicenca', { num: numLic }).then(function(res) {
+    var loadEl  = document.getElementById('ver-loading');
+    var cardEl  = document.getElementById('ver-card');
+    var erroEl  = document.getElementById('ver-erro');
+    if (loadEl) loadEl.style.display = 'none';
+
+    if (!res || res.erro || !res.licenca) {
+      if (erroEl) { erroEl.textContent = 'Licença não encontrada ou número inválido.'; erroEl.style.display = 'block'; }
+      return;
+    }
+
+    var l = res.licenca;
+    var hoje = new Date();
+    var valDate = l.validade ? new Date(l.validade) : null;
+    var diff = valDate ? Math.ceil((valDate - hoje) / (1000*60*60*24)) : null;
+    var vigente = diff !== null && diff >= 0;
+
+    // Preenche campos
+    var set = function(id, v) { var el = document.getElementById(id); if (el) el.textContent = v || '—'; };
+    set('ver-num',     l.num);
+    set('ver-tipo',    l.tipo || '');
+    set('ver-req',     l.req);
+    set('ver-doc',     l.doc || '');
+    set('ver-ativ',    l.atividade || l.ativ || '—');
+    set('ver-proto',   l.proto);
+    set('ver-emissao', fmtDate(l.emissao));
+    set('ver-validade', fmtDate(l.validade));
+
+    var badge = document.getElementById('ver-status-badge');
+    if (badge) {
+      if (diff === null) {
+        badge.textContent = 'SEM VALIDADE';
+        badge.style.cssText = 'background:#f3f4f6;color:#6b7280;font-family:var(--ff-mono);font-size:12px;padding:5px 14px;border-radius:99px;font-weight:600;flex-shrink:0';
+      } else if (vigente) {
+        badge.textContent = 'VIGENTE';
+        badge.style.cssText = 'background:#dcfce7;color:#15803d;font-family:var(--ff-mono);font-size:12px;padding:5px 14px;border-radius:99px;font-weight:600;flex-shrink:0';
+      } else {
+        badge.textContent = 'VENCIDA';
+        badge.style.cssText = 'background:#fef2f2;color:#dc2626;font-family:var(--ff-mono);font-size:12px;padding:5px 14px;border-radius:99px;font-weight:600;flex-shrink:0';
+      }
+    }
+
+    var diasEl = document.getElementById('ver-dias');
+    if (diasEl) {
+      if (diff === null) {
+        diasEl.textContent = '';
+      } else if (vigente) {
+        diasEl.textContent = diff === 0 ? 'Vence hoje.' : 'Vence em ' + diff + ' dia' + (diff === 1 ? '.' : 's.');
+        diasEl.style.color = diff <= 30 ? 'var(--amber)' : 'var(--text2)';
+      } else {
+        diasEl.textContent = 'Vencida há ' + Math.abs(diff) + ' dia' + (Math.abs(diff) === 1 ? '.' : 's.');
+        diasEl.style.color = 'var(--red)';
+      }
+    }
+
+    if (cardEl) cardEl.style.display = '';
+  }).catch(function(e) {
+    var loadEl = document.getElementById('ver-loading');
+    var erroEl = document.getElementById('ver-erro');
+    if (loadEl) loadEl.style.display = 'none';
+    if (erroEl) { erroEl.textContent = 'Erro ao consultar a licença. Tente novamente.'; erroEl.style.display = 'block'; }
+  });
+})();
 </script>
 </body>
 </html>

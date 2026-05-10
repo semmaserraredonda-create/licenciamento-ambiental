@@ -650,14 +650,16 @@ tbody td {
 .sp-emitido    { background: var(--cyan-bg);  color: var(--cyan);  }
 .sp-indeferido { background: var(--bg4);      color: var(--text3); }
 .sp-arquivado  { background: var(--bg4);      color: var(--text3); }
+.sp-assinatura { background: var(--amber-bg); color: var(--amber); }
 
-.sp-aguardando::before { content:''; width:5px;height:5px;border-radius:50%;background:var(--amber);flex-shrink:0; }
-.sp-analise::before    { content:''; width:5px;height:5px;border-radius:50%;background:var(--blue);flex-shrink:0;  }
-.sp-exigencia::before  { content:''; width:5px;height:5px;border-radius:50%;background:var(--red);flex-shrink:0;   }
-.sp-aprovado::before   { content:''; width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0;}
-.sp-emitido::before    { content:''; width:5px;height:5px;border-radius:50%;background:var(--cyan);flex-shrink:0;  }
-.sp-indeferido::before { content:''; width:5px;height:5px;border-radius:50%;background:var(--text3);flex-shrink:0; }
-.sp-arquivado::before  { content:''; width:5px;height:5px;border-radius:50%;background:var(--text3);flex-shrink:0; }
+.sp-aguardando::before  { content:''; width:5px;height:5px;border-radius:50%;background:var(--amber);flex-shrink:0; }
+.sp-analise::before     { content:''; width:5px;height:5px;border-radius:50%;background:var(--blue);flex-shrink:0;  }
+.sp-exigencia::before   { content:''; width:5px;height:5px;border-radius:50%;background:var(--red);flex-shrink:0;   }
+.sp-aprovado::before    { content:''; width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+.sp-emitido::before     { content:''; width:5px;height:5px;border-radius:50%;background:var(--cyan);flex-shrink:0;  }
+.sp-indeferido::before  { content:''; width:5px;height:5px;border-radius:50%;background:var(--text3);flex-shrink:0; }
+.sp-arquivado::before   { content:''; width:5px;height:5px;border-radius:50%;background:var(--text3);flex-shrink:0; }
+.sp-assinatura::before  { content:''; width:5px;height:5px;border-radius:50%;background:var(--amber);flex-shrink:0; }
 
 /* ICON BUTTONS */
 .icon-btn {
@@ -1835,13 +1837,14 @@ const CHIPS = {
 };
 
 const STATUS_PILLS = {
-  'Aguardando Documentos': 'sp-aguardando',
-  'Em Análise':            'sp-analise',
-  'Exigência':             'sp-exigencia',
-  'Aprovado':              'sp-aprovado',
-  'Emitido':               'sp-emitido',
-  'Indeferido':            'sp-indeferido',
-  'Arquivado':             'sp-arquivado',
+  'Aguardando Documentos':  'sp-aguardando',
+  'Em Análise':             'sp-analise',
+  'Exigência':              'sp-exigencia',
+  'Aprovado':               'sp-aprovado',
+  'Emitido':                'sp-emitido',
+  'Aguardando Assinatura':  'sp-assinatura',
+  'Indeferido':             'sp-indeferido',
+  'Arquivado':              'sp-arquivado',
 };
 
 // Dados demo
@@ -2307,8 +2310,16 @@ async function saveProcesso() {
   const endFull = partes.join(', ');
 
   const hoje = new Date().toISOString().split('T')[0];
+  const ano = new Date().getFullYear();
+  let id = genProtocolo();
+  if (STATE.gasUrl) {
+    try {
+      const r = await gasPOST('proximoProtocolo', {});
+      if (r.ok) id = r.id;
+    } catch(e) { console.warn('Falha ao obter protocolo do GAS:', e); }
+  }
   const np = {
-    id:    genProtocolo(),
+    id,
     req, doc, tel,
     email: document.getElementById('np-email').value.trim(),
     tipo, ativ,
@@ -2630,6 +2641,14 @@ async function enviarMensagem() {
       // Não salva p.docs — arquivos de mensagem ficam só no histórico
     } catch(e) { console.warn('Falha ao sincronizar:', e); }
   }
+  if (p.email) {
+    try {
+      await gasPOST('notificarCidadao', {
+        email: p.email, nome: p.req, proto: p.id,
+        mensagem: texto || '(arquivos anexados)'
+      });
+    } catch(e) {}
+  }
 }
 
 // Utilitário: File → base64
@@ -2707,6 +2726,11 @@ function renderDetFooter(p) {
       ? ' <button class="btn btn-primary" onclick="emitirLicenca(\'' + p.id + '\')">' +
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>' +
           ' Emitir Licença</button>'
+      : '') +
+    (p.status === 'Aguardando Assinatura' && STATE.user && STATE.user.role === 'Gestor'
+      ? ' <button class="btn btn-primary" onclick="assinarLicenca(\'' + p.id + '\')">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M20 6L9 17l-5-5"/></svg>' +
+          ' Assinar Licença</button>'
       : '');
 }
 
@@ -2749,6 +2773,10 @@ async function confirmStatus() {
     try {
       await gasPOST('salvarProcesso', { dados: p });
       await gasPOST('salvarHistorico', { proto: p.id, data: hoje, texto: textoHist });
+      await gasPOST('atualizarStatus', {
+        proto: p.id, novoStatus: novoStatus,
+        tecnico: STATE.user.name, obs: obs
+      });
     } catch(e) { console.warn('Falha ao sincronizar status com GAS:', e); }
   }
 }
@@ -2785,31 +2813,80 @@ async function emitirLicenca(id) {
   valDate.setDate(valDate.getDate() + valDias);
   const validade = valDate.toISOString().split('T')[0];
 
-  const licenca = { num, proto: p.id, req: p.req, tipo: p.tipo, emissao, validade };
+  const isGestor = STATE.user && STATE.user.role === 'Gestor';
+  const licenca = { num, proto: p.id, req: p.req, tipo: p.tipo, emissao, validade,
+    status: isGestor ? 'Emitida' : 'Aguardando Assinatura' };
   STATE.licencas.push(licenca);
-  p.status = 'Emitido';
-  p.hist.push({ d: emissao, t: `Licença emitida: ${num}` });
+  p.status = isGestor ? 'Emitido' : 'Aguardando Assinatura';
+  p.hist.push({ d: emissao, t: isGestor ? `Licença emitida: ${num}` : `Licença gerada (aguardando assinatura do gestor): ${num}` });
 
   closeModal('m-detalhe');
   renderDash();
   updateBadges();
   renderProcessos();
-  toast(`Licença ${num} emitida! Gerando PDF...`, 'ok');
 
-  // Navega para licenças e gera PDF automaticamente
+  if (isGestor) {
+    toast(`Licença ${num} emitida! Gerando PDF...`, 'ok');
+    const navLic = document.querySelector('[onclick*="licencas"]');
+    goTo('licencas', navLic);
+    renderLicencas();
+    setTimeout(() => gerarPDF(licenca), 600);
+  } else {
+    toast(`Licença ${num} aguardando assinatura do gestor.`, 'ok');
+    if (STATE.gasUrl) {
+      try {
+        await gasPOST('notificarGestor', {
+          proto: p.id, req: p.req, tipo: p.tipo,
+          mensagem: 'Licença aguardando sua assinatura.'
+        });
+      } catch(e) {}
+    }
+  }
+
+  if (STATE.gasUrl) {
+    try {
+      await gasPOST('salvarLicenca', { dados: licenca });
+      await gasPOST('salvarProcesso', { dados: p });
+      await gasPOST('salvarHistorico', { proto: p.id, data: emissao,
+        texto: isGestor ? `Licenca emitida: ${num}` : `Licenca gerada aguardando assinatura: ${num}` });
+    } catch(e) { console.warn('Falha ao sincronizar licença com GAS:', e); }
+  }
+}
+
+async function assinarLicenca(id) {
+  const p = STATE.processos.find(x => x.id === id);
+  if (!p) return;
+  const licenca = STATE.licencas.find(x => x.proto === id && x.status === 'Aguardando Assinatura');
+  if (!licenca) { toast('Licença pendente não encontrada.', 'err'); return; }
+
+  const hoje = new Date().toISOString().split('T')[0];
+  licenca.status = 'Emitida';
+  p.status = 'Emitido';
+  p.hist.push({ d: hoje, t: `Licença ${licenca.num} assinada por ${STATE.user.name}.` });
+
+  closeModal('m-detalhe');
+  renderDash();
+  updateBadges();
+  renderProcessos();
+  toast(`Licença ${licenca.num} assinada! Gerando PDF...`, 'ok');
+
   const navLic = document.querySelector('[onclick*="licencas"]');
   goTo('licencas', navLic);
   renderLicencas();
-
-  // Gera PDF em seguida (pequeno delay para a tela renderizar)
   setTimeout(() => gerarPDF(licenca), 600);
 
   if (STATE.gasUrl) {
     try {
       await gasPOST('salvarLicenca', { dados: licenca });
       await gasPOST('salvarProcesso', { dados: p });
-      await gasPOST('salvarHistorico', { proto: p.id, data: emissao, texto: `Licenca emitida: ${num}` });
-    } catch(e) { console.warn('Falha ao sincronizar licença com GAS:', e); }
+      await gasPOST('salvarHistorico', { proto: p.id, data: hoje, texto: `Licenca ${licenca.num} assinada por ${STATE.user.name}.` });
+      if (p.email) {
+        await gasPOST('notificarCidadao', {
+          email: p.email, nome: p.req, proto: p.id,
+          mensagem: `Sua licença ${licenca.num} foi emitida e está disponível no portal.`
+        });
+      }
+    } catch(e) { console.warn('Falha ao sincronizar assinatura com GAS:', e); }
   }
 }
 
@@ -3285,6 +3362,29 @@ async function gerarPDF(licenca) {
     });
   }
 
+  if (!window.QRCode) {
+    await new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+      s.onload = resolve; s.onerror = reject;
+      document.head.appendChild(s);
+    });
+  }
+
+  // Gera QR Code real apontando para verificação pública
+  let qrDataUrl = null;
+  try {
+    const qrText = `https://semmaserraredonda.github.io/sema-licenciamento/portal.html?verificar=${licenca.num}`;
+    const qrDiv = document.createElement('div');
+    qrDiv.style.cssText = 'position:absolute;left:-9999px;top:0;width:128px;height:128px;background:#fff';
+    document.body.appendChild(qrDiv);
+    new QRCode(qrDiv, { text: qrText, width: 128, height: 128, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+    await new Promise(r => setTimeout(r, 150));
+    const qrCanvas = qrDiv.querySelector('canvas');
+    if (qrCanvas) qrDataUrl = qrCanvas.toDataURL('image/png');
+    document.body.removeChild(qrDiv);
+  } catch(e) { console.warn('QR Code falhou:', e); }
+
   // Converte caracteres especiais para latin-1 compatível com Helvetica no jsPDF
   // º (U+00BA) e ª (U+00AA) são suportados nativamente — mantidos
   function toL(str) {
@@ -3542,26 +3642,20 @@ async function gerarPDF(licenca) {
   doc.setFontSize(8.5);
   doc.text('Secretaria Municipal de Meio Ambiente', ML, y);
 
-  // QR vetorial
+  // QR Code real
   const qx = W - MR - 28, qy = y - 32, qs = 28;
-  doc.setDrawColor(60, 60, 60);
-  doc.setLineWidth(0.4);
-  doc.rect(qx, qy, qs, qs);
-  doc.setFillColor(40, 40, 40);
-  [[0,0,7,7],[21,0,7,7],[0,21,7,7]].forEach(([rx,ry,rw,rh]) => {
-    doc.rect(qx+2+rx*qs/28, qy+2+ry*qs/28, rw*qs/28, rh*qs/28, 'F');
-    doc.setFillColor(255,255,255);
-    doc.rect(qx+2+rx*qs/28+1.5, qy+2+ry*qs/28+1.5, (rw-3)*qs/28, (rh-3)*qs/28, 'F');
-    doc.setFillColor(40,40,40);
-    doc.rect(qx+2+rx*qs/28+3, qy+2+ry*qs/28+3, (rw-6)*qs/28, (rh-6)*qs/28, 'F');
-  });
-  [[10,2],[12,2],[14,2],[10,4],[14,4],[11,5],[13,5],[10,6],[12,6],[2,10],[4,10],[6,10],[10,10],[14,10],[2,12],[6,12],[10,12],[12,12],[14,12],[4,14],[6,14],[10,14]].forEach(([mx,my]) => {
-    doc.rect(qx+2+mx*qs/28, qy+2+my*qs/28, qs/28, qs/28, 'F');
-  });
+  if (qrDataUrl) {
+    doc.addImage(qrDataUrl, 'PNG', qx, qy, qs, qs);
+  } else {
+    doc.setDrawColor(60, 60, 60);
+    doc.setLineWidth(0.4);
+    doc.rect(qx, qy, qs, qs);
+  }
+  doc.setFont('helvetica', 'normal');
   doc.setFontSize(6);
-  doc.setTextColor(60,60,60);
+  doc.setTextColor(60, 60, 60);
   doc.text('Verificar autenticidade', qx + qs/2, qy + qs + 3.5, { align: 'center' });
-  doc.setFont('courier','normal');
+  doc.setFont('courier', 'normal');
   doc.setFontSize(5.5);
   doc.text(licenca.num, qx + qs/2, qy + qs + 6.5, { align: 'center' });
 
