@@ -1515,11 +1515,17 @@ tbody td {
         <label>Mensagem <span class="req">*</span></label>
         <textarea id="msg-texto" rows="5" placeholder="Digite aqui a mensagem para o solicitante. Ex: Documentos recebidos. Solicito envio da planta baixa assinada pelo responsável técnico." style="resize:vertical"></textarea>
       </div>
-      <div class="field" style="margin-top:8px">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:400">
-          <input type="checkbox" id="msg-liberar-upload" style="width:16px;height:16px;accent-color:var(--accent)">
-          Liberar envio de documentos pelo solicitante ao enviar esta mensagem
+      <div style="margin-top:12px">
+        <label id="label-liberar-upload" style="display:flex;align-items:center;gap:12px;cursor:pointer;padding:12px 14px;border:1.5px solid var(--border2);border-radius:var(--radius);transition:all 0.15s;user-select:none" onclick="toggleLiberarUpload()">
+          <div id="check-liberar-upload" style="width:20px;height:20px;border-radius:5px;border:2px solid var(--border2);background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all 0.15s">
+            <svg id="check-icon-upload" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" style="width:12px;height:12px;display:none"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div>
+            <div style="font-size:13px;font-weight:500;color:var(--text)">Liberar envio de documentos</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:1px">O solicitante poderá anexar arquivos ao processo no Portal do Cidadão</div>
+          </div>
         </label>
+        <input type="checkbox" id="msg-liberar-upload" style="display:none">
       </div>
     </div>
     <div class="modal-footer">
@@ -2462,7 +2468,7 @@ function abrirMensagem(id) {
   STATE.activeId = id;
   document.getElementById('m-msg-proto').textContent = `${p.id} — ${p.req}`;
   document.getElementById('msg-texto').value = '';
-  document.getElementById('msg-liberar-upload').checked = false;
+  resetLiberarUpload();
   closeModal('m-detalhe');
   openModal('m-mensagem');
 }
@@ -3582,9 +3588,41 @@ async function adicionarDocProcesso() {}
 
 
 
-// ════════════════════════════════════════════
-// GESTAO DE USUARIOS
-// ════════════════════════════════════════════
+// Toggle visual do checkbox de liberar upload no modal de mensagem
+function toggleLiberarUpload() {
+  const cb    = document.getElementById('msg-liberar-upload');
+  const box   = document.getElementById('check-liberar-upload');
+  const icon  = document.getElementById('check-icon-upload');
+  const label = document.getElementById('label-liberar-upload');
+  cb.checked  = !cb.checked;
+  if (cb.checked) {
+    box.style.background   = 'var(--accent)';
+    box.style.borderColor  = 'var(--accent)';
+    icon.style.display     = 'block';
+    label.style.borderColor = 'var(--accent)';
+    label.style.background  = 'var(--accent-bg)';
+  } else {
+    box.style.background   = '#fff';
+    box.style.borderColor  = 'var(--border2)';
+    icon.style.display     = 'none';
+    label.style.borderColor = 'var(--border2)';
+    label.style.background  = '';
+  }
+}
+
+// Resetar o checkbox ao abrir o modal de mensagem
+function resetLiberarUpload() {
+  const cb = document.getElementById('msg-liberar-upload');
+  if (cb) cb.checked = false;
+  const box  = document.getElementById('check-liberar-upload');
+  const icon = document.getElementById('check-icon-upload');
+  const label= document.getElementById('label-liberar-upload');
+  if (box)   { box.style.background = '#fff'; box.style.borderColor = 'var(--border2)'; }
+  if (icon)  { icon.style.display = 'none'; }
+  if (label) { label.style.borderColor = 'var(--border2)'; label.style.background = ''; }
+}
+
+
 
 var USUARIOS_LOCAL = [
   { u: 'admin',   p: 'admin123', nome: 'Administrador',     perfil: 'Gestor' },

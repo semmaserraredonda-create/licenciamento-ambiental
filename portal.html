@@ -1499,6 +1499,17 @@ async function carregarDados() {
     ]);
     PORTAL.processos = rProc.processos || [];
     PORTAL.licencas  = rLic.licencas   || [];
+
+    // Normaliza permitir_upload — garante booleano independente do que o GAS retornar
+    PORTAL.processos.forEach(function(p) {
+      p.permitir_upload = (
+        p.permitir_upload === true ||
+        p.permitir_upload === 'true' ||
+        p.permitir_upload === 'TRUE' ||
+        p.permitir_upload === 1 ||
+        p.permitir_upload === '1'
+      );
+    });
   } catch(e) {
     toast('Não foi possível carregar os dados. Verifique sua conexão.', 'err');
   } finally { hideLoad(); }
