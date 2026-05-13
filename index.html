@@ -1192,6 +1192,17 @@ tbody td {
         <!-- DASHBOARD -->
         <div class="screen active" id="screen-dashboard">
           <div class="metrics" id="metrics"></div>
+          <!-- Item 9: gráficos -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px" id="dash-graficos">
+            <div class="card" style="padding:20px">
+              <div class="card-title" style="margin-bottom:14px;font-size:13px">Processos por Status</div>
+              <canvas id="chart-status" height="180"></canvas>
+            </div>
+            <div class="card" style="padding:20px">
+              <div class="card-title" style="margin-bottom:14px;font-size:13px">Aberturas nos últimos 6 meses</div>
+              <canvas id="chart-mensal" height="180"></canvas>
+            </div>
+          </div>
           <div class="card">
             <div class="card-header">
               <div class="card-title">Processos Recentes</div>
@@ -1219,8 +1230,8 @@ tbody td {
             <div class="card-header">
               <div class="card-title">Processos de Licenciamento</div>
               <div class="filters">
-                <input type="text" id="f-busca" placeholder="Protocolo ou requerente..." oninput="renderProcessos()" style="width:220px">
-                <select id="f-tipo" onchange="renderProcessos()">
+                <input type="text" id="f-busca" placeholder="Protocolo, requerente ou CNPJ..." oninput="STATE.page=1;renderProcessos()" style="width:200px">
+                <select id="f-tipo" onchange="STATE.page=1;renderProcessos()">
                   <option value="">Todas as modalidades</option>
                   <option>Dispensa</option>
                   <option>LAC</option><option>LS</option>
@@ -1229,16 +1240,27 @@ tbody td {
                   <option>LIO</option><option>LRO</option>
                   <option>LVPE</option><option>AA</option>
                 </select>
-                <select id="f-status" onchange="renderProcessos()">
+                <select id="f-status" onchange="STATE.page=1;renderProcessos()">
                   <option value="">Todos os status</option>
                   <option>Aguardando Documentos</option>
                   <option>Em Análise</option>
                   <option>Exigência</option>
+                  <option>Protocolo Gerado</option>
                   <option>Aprovado</option>
+                  <option>Aguardando Assinatura</option>
                   <option>Emitido</option>
                   <option>Indeferido</option>
                   <option>Arquivado</option>
                 </select>
+                <!-- Item 7: filtros de período e tipo de ID -->
+                <select id="f-id-tipo" onchange="STATE.page=1;renderProcessos()" title="Tipo de número">
+                  <option value="">SOL- e SEMA-</option>
+                  <option value="SOL-">Somente Solicitações (SOL-)</option>
+                  <option value="SEMA-">Somente Protocolos (SEMA-)</option>
+                </select>
+                <input type="date" id="f-data-ini" onchange="STATE.page=1;renderProcessos()" title="Data inicial" style="width:130px">
+                <input type="date" id="f-data-fim" onchange="STATE.page=1;renderProcessos()" title="Data final" style="width:130px">
+                <button class="btn btn-ghost" onclick="limparFiltros()" title="Limpar filtros" style="padding:6px 10px;font-size:11px">✕ Limpar</button>
               </div>
             </div>
             <table>
@@ -1610,7 +1632,7 @@ tbody td {
         </div>
         <div class="field">
           <label>CPF / CNPJ <span class="req">*</span></label>
-          <input id="np-doc" placeholder="000.000.000-00 ou 00.000.000/0001-00" oninput="mascaraCpfCnpj(this)" maxlength="18">
+          <input id="np-doc" placeholder="000.000.000-00 ou 00.000.000/0001-00" oninput="mascaraCpfCnpj(this)" onchange="checkCNPJ()" maxlength="18">
         </div>
         <div class="field">
           <label>Telefone</label>
@@ -2212,6 +2234,83 @@ function renderDash() {
       <td>${statusPill(x.status)}</td>
     </tr>
   `).join('') || `<tr><td colspan="6">${emptyRow(6, true)}</td></tr>`;
+
+  // Item 9: gráficos via Chart.js (carregado lazy)
+  renderGraficos(p);
+}
+
+async function renderGraficos(processos) {
+  if (!processos.length) return;
+  // Carrega Chart.js se ainda não foi carregado
+  if (!window.Chart) {
+    await new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js';
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    }).catch(() => null);
+    if (!window.Chart) return;
+  }
+
+  // ── Gráfico 1: pizza por status ──────────────────────────────
+  const statusCounts = {};
+  processos.forEach(p => {
+    statusCounts[p.status] = (statusCounts[p.status] || 0) + 1;
+  });
+  const statusCores = {
+    'Aguardando Documentos': '#f59e0b', 'Em Análise': '#3b82f6',
+    'Exigência': '#ef4444', 'Protocolo Gerado': '#0369a1',
+    'Aprovado': '#10b981', 'Aguardando Assinatura': '#f97316',
+    'Emitido': '#1a6b3a', 'Indeferido': '#6b7280', 'Arquivado': '#94a3b8',
+  };
+
+  const ctx1 = document.getElementById('chart-status');
+  if (ctx1) {
+    if (ctx1._chartInst) ctx1._chartInst.destroy();
+    ctx1._chartInst = new Chart(ctx1, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(statusCounts),
+        datasets: [{ data: Object.values(statusCounts),
+          backgroundColor: Object.keys(statusCounts).map(s => statusCores[s] || '#94a3b8'),
+          borderWidth: 2, borderColor: '#fff' }]
+      },
+      options: { plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, boxWidth: 12 } } }, cutout: '60%' }
+    });
+  }
+
+  // ── Gráfico 2: barras por mês (últimos 6 meses) ───────────────
+  const hoje = new Date();
+  const meses = [];
+  const labels = [];
+  const mesesNomes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+    meses.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);
+    labels.push(mesesNomes[d.getMonth()] + '/' + String(d.getFullYear()).slice(2));
+  }
+  const contagens = meses.map(m =>
+    processos.filter(p => p.data && p.data.startsWith(m)).length
+  );
+
+  const ctx2 = document.getElementById('chart-mensal');
+  if (ctx2) {
+    if (ctx2._chartInst) ctx2._chartInst.destroy();
+    ctx2._chartInst = new Chart(ctx2, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{ label: 'Processos abertos', data: contagens,
+          backgroundColor: 'rgba(26,107,58,0.7)', borderColor: '#1a6b3a',
+          borderWidth: 1.5, borderRadius: 4 }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } } },
+                  x: { ticks: { font: { size: 10 } } } }
+      }
+    });
+  }
 }
 
 
@@ -2219,21 +2318,36 @@ function renderDash() {
 // PROCESSOS
 // ════════════════════════════════════════════
 
+function limparFiltros() {
+  ['f-busca','f-tipo','f-status','f-id-tipo','f-data-ini','f-data-fim'].forEach(function(id) {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  STATE.page = 1;
+  renderProcessos();
+}
+
 function renderProcessos() {
-  const busca  = (document.getElementById('f-busca')?.value || '').toLowerCase();
-  const tipo   = document.getElementById('f-tipo')?.value || '';
-  const status = document.getElementById('f-status')?.value || '';
+  const busca   = (document.getElementById('f-busca')?.value   || '').toLowerCase();
+  const tipo    = document.getElementById('f-tipo')?.value     || '';
+  const status  = document.getElementById('f-status')?.value   || '';
+  const idTipo  = document.getElementById('f-id-tipo')?.value  || '';
+  const dataIni = document.getElementById('f-data-ini')?.value || '';
+  const dataFim = document.getElementById('f-data-fim')?.value || '';
 
   const LIDAS_KEY = 'sema_tec_msgs_lidas_' + (STATE.user ? STATE.user.u : '');
   const lidas = JSON.parse(localStorage.getItem(LIDAS_KEY) || '{}');
 
   let list = STATE.processos;
-  if (busca)  list = list.filter(p => p.id.toLowerCase().includes(busca) || p.req.toLowerCase().includes(busca));
-  if (tipo)   list = list.filter(p => p.tipo === tipo);
-  if (status) list = list.filter(p => p.status === status);
+  if (busca)   list = list.filter(p => p.id.toLowerCase().includes(busca) || p.req.toLowerCase().includes(busca) || (p.doc||'').toLowerCase().includes(busca));
+  if (tipo)    list = list.filter(p => p.tipo === tipo);
+  if (idTipo)  list = list.filter(p => String(p.id).startsWith(idTipo));
+  if (dataIni) list = list.filter(p => p.data && p.data >= dataIni);
+  if (dataFim) list = list.filter(p => p.data && p.data <= dataFim);
+  if (status && status !== 'msg-cidadao') list = list.filter(p => p.status === status);
 
   // Filtro especial: só processos com mensagens não lidas do cidadão
-  if (STATE.filtroMsgCidadao) {
+  if (status === 'msg-cidadao' || STATE.filtroMsgCidadao) {
     list = list.filter(p => (p.hist || []).some(h => {
       if (!h.t || !h.t.startsWith('[CID]')) return false;
       return !lidas[p.id + '_' + h.d + '_' + h.t.length];
@@ -2241,8 +2355,9 @@ function renderProcessos() {
   }
 
   const total = list.length;
-  const ini = (STATE.page - 1) * PER_PAGE;
-  const page = list.slice(ini, ini + PER_PAGE);
+  const ini   = (STATE.page - 1) * PER_PAGE;
+  const page  = list.slice(ini, ini + PER_PAGE);
+
 
   document.getElementById('proc-tbody').innerHTML = page.map(p => {
     // Verifica se tem mensagem não lida do cidadão
@@ -3257,10 +3372,45 @@ async function buscarCep() {
 // CNPJ — seção proprietário
 // ════════════════════════════════════════════
 
-function checkCNPJ() {
-  const val = document.getElementById('np-doc').value.replace(/\D/g, '');
-  const secao = document.getElementById('secao-proprietario');
+async function checkCNPJ() {
+  const val    = document.getElementById('np-doc').value.replace(/\D/g, '');
+  const secao  = document.getElementById('secao-proprietario');
   if (secao) secao.style.display = val.length === 14 ? 'block' : 'none';
+
+  // Item 10: busca automática de CNPJ na API pública
+  if (val.length !== 14) return;
+
+  const reqEl = document.getElementById('np-req');
+  const endEl = document.getElementById('np-logradouro');
+  const numEl = document.getElementById('np-numero');
+  const baiEl = document.getElementById('np-bairro');
+  const cidEl = document.getElementById('np-cidade');
+  const cepEl = document.getElementById('np-cep');
+  const ufEl  = document.getElementById('np-uf');
+
+  // Só preenche se campos estiverem vazios
+  if (reqEl && reqEl.value.trim()) return;
+
+  try {
+    const res  = await fetch(`https://open.cnpja.com/office/${val}`, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return;
+    const data = await res.json();
+
+    if (reqEl && data.company?.name)  reqEl.value = data.company.name;
+    if (endEl && data.address?.street) endEl.value = data.address.street;
+    if (numEl && data.address?.number) numEl.value = data.address.number;
+    if (baiEl && data.address?.district) baiEl.value = data.address.district;
+    if (cidEl && data.address?.city)   cidEl.value = data.address.city;
+    if (ufEl  && data.address?.state)  ufEl.value  = data.address.state;
+    if (cepEl && data.address?.zip) {
+      cepEl.value = String(data.address.zip).replace(/(\d{5})(\d{3})/, '$1-$2');
+    }
+
+    toast('Dados preenchidos automaticamente via CNPJ.', 'ok');
+  } catch(e) {
+    // Falha silenciosa — usuário preenche manualmente
+    console.warn('Busca CNPJ falhou:', e);
+  }
 }
 
 function mascaraCpf(el) {
@@ -4517,6 +4667,17 @@ document.querySelectorAll('.overlay').forEach(o => {
     sessionStorage.removeItem('sema_session');
   }
 })();
+
+// Item 11: sanitização básica contra XSS
+function sanitize(str) {
+  if (!str && str !== 0) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
 </script>
 </body>
 </html>
