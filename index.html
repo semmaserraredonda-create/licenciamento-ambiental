@@ -649,6 +649,7 @@ tbody td {
 
 .sp-aguardando { background: var(--amber-bg); color: var(--amber); }
 .sp-analise    { background: var(--blue-bg);  color: var(--blue);  }
+.sp-protocolo { background: #e0f2fe; color: #0369a1; }
 .sp-exigencia  { background: var(--red-bg);   color: var(--red);   }
 .sp-aprovado   { background: var(--accent-bg);color: var(--accent);}
 .sp-emitido    { background: var(--cyan-bg);  color: var(--cyan);  }
@@ -1794,6 +1795,37 @@ tbody td {
   </div>
 </div>
 
+
+<!-- MODAL GERAR PROTOCOLO -->
+<div class="overlay" id="m-protocolo">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div>
+        <h3 class="modal-title">Gerar Número de Protocolo</h3>
+        <p id="m-proto-label" style="font-size:12px;color:var(--text3);margin:2px 0 0"></p>
+      </div>
+      <button class="modal-close" onclick="closeModal('m-protocolo')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:#e0f2fe;border:1px solid #7dd3fc;border-radius:var(--radius);padding:12px 14px;margin-bottom:16px;font-size:12px;color:#0369a1">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;vertical-align:middle;margin-right:5px"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Ao confirmar, será gerado um <strong>Número de Protocolo oficial</strong> (SEMA-AAAA-XXXX) para esta solicitação. Esta ação indica que os documentos foram analisados e o pagamento da taxa foi confirmado.
+      </div>
+      <div class="field">
+        <label>Observação (opcional)</label>
+        <textarea id="proto-obs" rows="3" placeholder="Ex: Documentos verificados. Comprovante de pagamento conferido."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('m-protocolo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarGerarProtocolo()" style="background:#0369a1;border-color:#0369a1">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        Confirmar e Gerar Protocolo
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="m-status">
   <div class="modal" style="max-width:460px">
     <div class="modal-header">
@@ -1807,13 +1839,7 @@ tbody td {
       <div class="field">
         <label>Novo Status <span class="req">*</span></label>
         <select id="st-novo">
-          <option>Aguardando Documentos</option>
-          <option>Em Análise</option>
-          <option>Exigência</option>
-          <option>Aprovado</option>
-          <option>Emitido</option>
-          <option>Indeferido</option>
-          <option>Arquivado</option>
+          <!-- opções preenchidas dinamicamente por openStatus() -->
         </select>
       </div>
       <div class="field">
@@ -1870,6 +1896,7 @@ const STATUS_PILLS = {
   'Aguardando Documentos':  'sp-aguardando',
   'Em Análise':             'sp-analise',
   'Exigência':              'sp-exigencia',
+  'Protocolo Gerado':       'sp-protocolo',
   'Aprovado':               'sp-aprovado',
   'Emitido':                'sp-emitido',
   'Aguardando Assinatura':  'sp-assinatura',
@@ -1879,12 +1906,12 @@ const STATUS_PILLS = {
 
 // Dados demo
 const DEMO = [
-  { id:'SEMA-2026-0001', req:'Mercado Serra Verde Ltda', doc:'12.345.678/0001-90', tel:'(83) 98765-4321', email:'mercado@ex.com', tipo:'LAC', ativ:'Comércio varejista de alimentos', end:'Rua Dom Pedro II, 45 — Centro', status:'Em Análise', data:'2026-04-10', obs:'Documentos entregues.', hist:[{d:'2026-04-10',t:'Processo aberto.'},{d:'2026-04-12',t:'Encaminhado para análise técnica.'}] },
-  { id:'SEMA-2026-0002', req:'Posto Boa Vista Combustíveis', doc:'98.765.432/0001-11', tel:'(83) 99234-5678', email:'posto@ex.com', tipo:'LO', ativ:'Comércio varejista de combustíveis e lubrificantes', end:'BR-412, km 3 — Zona Rural', status:'Exigência', data:'2026-03-22', obs:'Pendente: planta baixa e ART.', hist:[{d:'2026-03-22',t:'Processo aberto.'},{d:'2026-03-28',t:'Análise iniciada.'},{d:'2026-04-05',t:'Exigência: solicitar planta baixa e ART.'}] },
-  { id:'SEMA-2026-0003', req:'João Ferreira da Silva', doc:'456.789.123-00', tel:'(83) 98111-2233', email:'', tipo:'Dispensa', ativ:'Pequeno comercio - mercearia ate 50m2', end:'Rua São João, 12 — Bairro Novo', status:'Emitido', data:'2026-02-14', obs:'', hist:[{d:'2026-02-14',t:'Processo aberto.'},{d:'2026-02-16',t:'Análise concluída — favorável.'},{d:'2026-02-18',t:'Dispensa emitida: DISP-2026-001.'}] },
-  { id:'SEMA-2026-0004', req:'Fazenda Santa Rita Agropecuária', doc:'11.222.333/0001-44', tel:'(83) 99876-5432', email:'fazenda@ex.com', tipo:'LS', ativ:'Bovinocultura extensiva — 500 animais', end:'Sítio Santa Rita, Zona Rural', status:'Aguardando Documentos', data:'2026-04-18', obs:'Aguardando escritura e CCIR.', hist:[{d:'2026-04-18',t:'Processo aberto. Documentação incompleta.'}] },
-  { id:'SEMA-2026-0005', req:'Mineração Quartz Nordeste S.A.', doc:'55.666.777/0001-88', tel:'(83) 3333-4444', email:'mineracao@ex.com', tipo:'LP', ativ:'Extração de areia e cascalho — leito de riacho', end:'Leito do Riacho Cabaceiras', status:'Indeferido', data:'2026-01-08', obs:'', hist:[{d:'2026-01-08',t:'Processo aberto.'},{d:'2026-02-10',t:'Vistoria realizada.'},{d:'2026-03-01',t:'Indeferido: área em APP — vedada pelo Código Florestal.'}] },
-  { id:'SEMA-2026-0006', req:'Avicultura Familiar Lima', doc:'789.123.456-11', tel:'(83) 99555-8877', email:'avicultura@ex.com', tipo:'LAC', ativ:'Avicultura convencional de corte — 15.000 aves', end:'Sítio Boa Esperança', status:'Aprovado', data:'2026-04-01', obs:'', hist:[{d:'2026-04-01',t:'Processo aberto.'},{d:'2026-04-14',t:'Análise concluída — deferido.'}] },
+  { id:'SOL-2026-0001', req:'Mercado Serra Verde Ltda', doc:'12.345.678/0001-90', tel:'(83) 98765-4321', email:'mercado@ex.com', tipo:'LAC', ativ:'Comércio varejista de alimentos', end:'Rua Dom Pedro II, 45 — Centro', status:'Em Análise', data:'2026-04-10', obs:'Documentos entregues.', hist:[{d:'2026-04-10',t:'Processo aberto.'},{d:'2026-04-12',t:'Encaminhado para análise técnica.'}] },
+  { id:'SOL-2026-0002', req:'Posto Boa Vista Combustíveis', doc:'98.765.432/0001-11', tel:'(83) 99234-5678', email:'posto@ex.com', tipo:'LO', ativ:'Comércio varejista de combustíveis e lubrificantes', end:'BR-412, km 3 — Zona Rural', status:'Exigência', data:'2026-03-22', obs:'Pendente: planta baixa e ART.', hist:[{d:'2026-03-22',t:'Processo aberto.'},{d:'2026-03-28',t:'Análise iniciada.'},{d:'2026-04-05',t:'Exigência: solicitar planta baixa e ART.'}] },
+  { id:'SOL-2026-0003', req:'João Ferreira da Silva', doc:'456.789.123-00', tel:'(83) 98111-2233', email:'', tipo:'Dispensa', ativ:'Pequeno comercio - mercearia ate 50m2', end:'Rua São João, 12 — Bairro Novo', status:'Emitido', data:'2026-02-14', obs:'', hist:[{d:'2026-02-14',t:'Processo aberto.'},{d:'2026-02-16',t:'Análise concluída — favorável.'},{d:'2026-02-18',t:'Dispensa emitida: DISP-2026-001.'}] },
+  { id:'SOL-2026-0004', req:'Fazenda Santa Rita Agropecuária', doc:'11.222.333/0001-44', tel:'(83) 99876-5432', email:'fazenda@ex.com', tipo:'LS', ativ:'Bovinocultura extensiva — 500 animais', end:'Sítio Santa Rita, Zona Rural', status:'Aguardando Documentos', data:'2026-04-18', obs:'Aguardando escritura e CCIR.', hist:[{d:'2026-04-18',t:'Processo aberto. Documentação incompleta.'}] },
+  { id:'SOL-2026-0005', req:'Mineração Quartz Nordeste S.A.', doc:'55.666.777/0001-88', tel:'(83) 3333-4444', email:'mineracao@ex.com', tipo:'LP', ativ:'Extração de areia e cascalho — leito de riacho', end:'Leito do Riacho Cabaceiras', status:'Indeferido', data:'2026-01-08', obs:'', hist:[{d:'2026-01-08',t:'Processo aberto.'},{d:'2026-02-10',t:'Vistoria realizada.'},{d:'2026-03-01',t:'Indeferido: área em APP — vedada pelo Código Florestal.'}] },
+  { id:'SOL-2026-0006', req:'Avicultura Familiar Lima', doc:'789.123.456-11', tel:'(83) 99555-8877', email:'avicultura@ex.com', tipo:'LAC', ativ:'Avicultura convencional de corte — 15.000 aves', end:'Sítio Boa Esperança', status:'Aprovado', data:'2026-04-01', obs:'', hist:[{d:'2026-04-01',t:'Processo aberto.'},{d:'2026-04-14',t:'Análise concluída — deferido.'}] },
 ];
 
 const DEMO_LIC = [
@@ -2139,15 +2166,23 @@ function setFilter(s) {
 
 function renderDash() {
   const p = STATE.processos;
-  const analise  = p.filter(x => x.status === 'Em Análise').length;
-  const exig     = p.filter(x => x.status === 'Exigência').length;
-  const emitidas = STATE.licencas.length;
+  // ITEM 6: separar solicitações (SOL-) de processos com protocolo oficial
+  const solicitacoes = p.filter(x => String(x.id).startsWith('SOL-')).length;
+  const aguardProto  = p.filter(x => String(x.id).startsWith('SOL-') && x.status !== 'Indeferido' && x.status !== 'Arquivado').length;
+  const analise      = p.filter(x => x.status === 'Em Análise').length;
+  const exig         = p.filter(x => x.status === 'Exigência').length;
+  const emitidas     = STATE.licencas.length;
 
   document.getElementById('metrics').innerHTML = `
     <div class="metric">
       <div class="metric-label">Total de Processos</div>
       <div class="metric-value">${p.length}</div>
-      <div class="metric-sub">Todos os tipos</div>
+      <div class="metric-sub">${solicitacoes} solicitação(ões) · ${p.length - solicitacoes} protocolo(s)</div>
+    </div>
+    <div class="metric" style="border-top:3px solid #0369a1">
+      <div class="metric-label" style="color:#0369a1">Aguardando Protocolo</div>
+      <div class="metric-value" style="color:#0369a1">${aguardProto}</div>
+      <div class="metric-sub">Docs/pgto pendente análise</div>
     </div>
     <div class="metric m-amber">
       <div class="metric-label">Em Análise</div>
@@ -2169,15 +2204,16 @@ function renderDash() {
   const recentes = [...p].sort((a,b) => b.data.localeCompare(a.data)).slice(0,6);
   document.getElementById('dash-tbody').innerHTML = recentes.map(x => `
     <tr>
-      <td style="white-space:nowrap"><span class="proto">${x.id}</span></td>
+      <td style="white-space:nowrap"><span class="proto" style="${String(x.id).startsWith('SOL-') ? 'color:#0369a1' : ''}">${x.id}</span></td>
       <td>${x.req}</td>
       <td>${chipTipo(x.tipo)}</td>
-      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)">${x.ativ}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.ativ||'—'}</td>
       <td style="font-family:var(--font-mono);font-size:11px;color:var(--text3)">${fmtDate(x.data)}</td>
       <td>${statusPill(x.status)}</td>
     </tr>
   `).join('') || `<tr><td colspan="6">${emptyRow(6, true)}</td></tr>`;
 }
+
 
 // ════════════════════════════════════════════
 // PROCESSOS
@@ -2220,7 +2256,10 @@ function renderProcessos() {
          </span>` : '';
     return `
     <tr>
-      <td style="white-space:nowrap"><span class="proto">${p.id}</span></td>
+      <td style="white-space:nowrap">
+        <span class="proto" style="${String(p.id).startsWith('SOL-') ? 'color:#0369a1;background:#e0f2fe;padding:2px 6px;border-radius:4px;font-size:11px' : ''}">${p.id}</span>
+        ${String(p.id).startsWith('SOL-') ? '<span style="font-size:9px;color:#0369a1;display:block;margin-top:1px">Solicitação</span>' : ''}
+      </td>
       <td style="font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.req}</td>
       <td style="font-family:var(--font-mono);font-size:11px;color:var(--text3);white-space:nowrap">${p.doc}</td>
       <td>${chipTipo(p.tipo)}</td>
@@ -2322,9 +2361,16 @@ function openModalNovo() {
   openModal('m-novo');
 }
 
-function genProtocolo() {
+function genSolicitacao() {
   const ano = new Date().getFullYear();
   const seq = String(STATE.processos.length + 1).padStart(4,'0');
+  return `SOL-${ano}-${seq}`;
+}
+
+// genProtocolo mantida apenas como fallback interno — não usar para abrir processos
+function genProtocolo() {
+  const ano = new Date().getFullYear();
+  const seq = String(STATE.processos.filter(p => !String(p.id).startsWith('SOL-')).length + 1).padStart(4,'0');
   return `SEMA-${ano}-${seq}`;
 }
 
@@ -2368,12 +2414,13 @@ async function saveProcesso() {
 
   const hoje = new Date().toISOString().split('T')[0];
   const ano = new Date().getFullYear();
-  let id = genProtocolo();
+  // Gera Número de Solicitação (não é protocolo ainda)
+  let id = genSolicitacao();
   if (STATE.gasUrl) {
     try {
-      const r = await gasPOST('proximoProtocolo', {});
+      const r = await gasPOST('proximoSolicitacao', {});
       if (r.ok) id = r.id;
-    } catch(e) { console.warn('Falha ao obter protocolo do GAS:', e); }
+    } catch(e) { console.warn('Falha ao obter solicitação do GAS:', e); }
   }
   const np = {
     id,
@@ -2398,7 +2445,7 @@ async function saveProcesso() {
   closeModal('m-novo');
   renderDash();
   updateBadges();
-  toast(`Processo ${np.id} aberto!`, 'ok');
+  toast(`Solicitação ${np.id} registrada! O protocolo será gerado após análise dos documentos.`, 'ok');
 
   if (STATE.gasUrl) {
     try {
@@ -2779,10 +2826,19 @@ function renderDetFooter(p) {
       ' Enviar Mensagem' +
     '</button> ' +
     '<button class="btn btn-amber" onclick="closeModal(\'m-detalhe\');openStatus(\'' + p.id + '\')">Atualizar Status</button>' +
-    (p.status === 'Aprovado'
-      ? ' <button class="btn btn-primary" onclick="emitirLicenca(\'' + p.id + '\')">' +
-          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>' +
+    // Botão Gerar Protocolo — só aparece para solicitações (SOL-) não encerradas
+    (String(p.id).startsWith('SOL-') && p.status !== 'Indeferido' && p.status !== 'Arquivado'
+      ? ' <button class="btn" style="background:#0369a1;color:#fff;font-weight:600;border:1px solid #0369a1" onclick="closeModal(\'m-detalhe\');abrirGerarProtocolo(\'' + p.id + '\')">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' +
+          ' Gerar Protocolo</button>'
+      : '') +
+    // ITEM 2: Emitir só para protocolo oficial (SEMA-), não para solicitação (SOL-)
+    (p.status === 'Aprovado' && !String(p.id).startsWith('SOL-')
+      ? ' <button class="btn btn-primary" onclick="emitirLicenca(\'' + p.id + '\')">'+
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>'+
           ' Emitir Licença</button>'
+      : p.status === 'Aprovado' && String(p.id).startsWith('SOL-')
+      ? ' <button class="btn" style="background:#f1f5f9;color:#94a3b8;border:1px solid #e2e8f0;cursor:not-allowed" disabled title="Gere o protocolo oficial antes de emitir"> Gerar protocolo primeiro</button>'
       : '') +
     (p.status === 'Aguardando Assinatura' && STATE.user && STATE.user.role === 'Gestor'
       ? ' <button class="btn btn-primary" onclick="assinarLicenca(\'' + p.id + '\')">' +
@@ -2793,12 +2849,102 @@ function renderDetFooter(p) {
 
 
 
+
+// ── GERAR PROTOCOLO ───────────────────────────────────────────────────
+
+function abrirGerarProtocolo(id) {
+  const p = STATE.processos.find(x => x.id === id);
+  if (!p) return;
+  STATE.activeId = id;
+  const label = document.getElementById('m-proto-label');
+  if (label) label.textContent = `${p.id} — ${p.req}`;
+  const obs = document.getElementById('proto-obs');
+  if (obs) obs.value = '';
+  openModal('m-protocolo');
+}
+
+async function confirmarGerarProtocolo() {
+  const p = STATE.processos.find(x => x.id === STATE.activeId);
+  if (!p) return;
+
+  const obs  = (document.getElementById('proto-obs')?.value || '').trim();
+  const hoje = new Date().toISOString().split('T')[0];
+
+  // Gera o protocolo oficial via GAS
+  let novoId = null;
+  if (STATE.gasUrl) {
+    try {
+      const r = await gasPOST('proximoProtocolo', {});
+      if (r.ok) novoId = r.id;
+    } catch(e) { console.warn('Falha ao obter protocolo do GAS:', e); }
+  }
+  if (!novoId) {
+    const ano = new Date().getFullYear();
+    const seq = String(STATE.processos.filter(x => !String(x.id).startsWith('SOL-')).length + 1).padStart(4,'0');
+    novoId = `SEMA-${ano}-${seq}`;
+  }
+
+  const idAnterior = p.id;
+
+  // Atualiza o processo com o novo ID e status
+  p.id       = novoId;
+  p.status   = 'Protocolo Gerado';
+  p.protocolo_gerado_em = hoje;
+  p.hist = p.hist || [];
+  p.hist.push({
+    d: hoje,
+    t: `Protocolo ${novoId} gerado por ${STATE.user.name}. Solicitação anterior: ${idAnterior}.` +
+       (obs ? ` ${obs}` : '')
+  });
+
+  closeModal('m-protocolo');
+  renderDash();
+  updateBadges();
+  renderProcessos();
+  toast(`Protocolo ${novoId} gerado com sucesso!`, 'ok');
+
+  // Sincroniza com GAS
+  if (STATE.gasUrl) {
+    try {
+      // Salva processo com novo ID
+      await gasPOST('salvarProcesso', { dados: p });
+      // Registra histórico no novo protocolo
+      await gasPOST('salvarHistorico', {
+        proto: novoId, data: hoje,
+        texto: `Protocolo gerado a partir da solicitação ${idAnterior} por ${STATE.user.name}.` + (obs ? ` ${obs}` : '')
+      });
+      // Remove o registro antigo (SOL-)
+      await gasPOST('deletarProcesso', { id: idAnterior });
+      // Notifica cidadão se tiver email
+      if (p.email) {
+        await gasPOST('notificarCidadao', {
+          email: p.email,
+          nome:  p.req,
+          proto: novoId,
+          mensagem: `Seu requerimento foi analisado e recebeu o número de protocolo oficial: ${novoId}. Acompanhe o andamento pelo Portal do Cidadão.`
+        });
+      }
+    } catch(e) { console.warn('GAS sync protocolo:', e); }
+  }
+}
+
 function openStatus(id) {
   STATE.activeId = id;
   const p = STATE.processos.find(x => x.id === id);
   document.getElementById('st-label').textContent = `${p.id} — ${p.req}`;
-  document.getElementById('st-novo').value = p.status;
   document.getElementById('st-obs').value = '';
+
+  // ITEM 14: opções de status variam conforme o tipo do ID
+  const isSol = String(p.id).startsWith('SOL-');
+  const opcoesSOL  = ['Aguardando Documentos','Em Análise','Exigência','Indeferido','Arquivado'];
+  const opcoesSEMA = ['Em Análise','Exigência','Protocolo Gerado','Aprovado','Indeferido','Arquivado'];
+  const opcoes = isSol ? opcoesSOL : opcoesSEMA;
+
+  const sel = document.getElementById('st-novo');
+  sel.innerHTML = opcoes.map(o =>
+    `<option value="${o}"${o === p.status ? ' selected' : ''}>${o}</option>`
+  ).join('');
+
   openModal('m-status');
 }
 
