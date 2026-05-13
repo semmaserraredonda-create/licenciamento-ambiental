@@ -1723,19 +1723,6 @@ tbody td {
           <div style="font-size:10px;color:var(--text3);margin-top:4px;font-family:var(--font-mono)">Os arquivos serão enviados ao Google Drive ao salvar o processo.</div>
         </div>
 
-        <!-- CONDICIONANTES ADICIONAIS -->
-        <div class="field span2">
-          <label>Condicionantes Adicionais</label>
-          <div id="cond-lista" style="margin-bottom:8px;display:flex;flex-direction:column;gap:6px"></div>
-          <div style="display:flex;gap:8px">
-            <input id="np-cond-texto" placeholder="Digite uma condicionante adicional específica para este processo..." style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;color:var(--text);font-family:var(--font-body);font-size:14px;outline:none">
-            <button type="button" class="btn btn-ghost" onclick="adicionarCondicionante()" style="flex-shrink:0">+ Adicionar</button>
-          </div>
-          <div style="font-family:var(--font-mono);font-size:10px;color:var(--text3);margin-top:6px">
-            As condicionantes padrão (validade, renovação, fiscalização, etc.) são adicionadas automaticamente na licença.
-          </div>
-        </div>
-
         <div class="field span2">
           <label>Observações</label>
           <textarea id="np-obs" placeholder="Informações adicionais..."></textarea>
@@ -1770,6 +1757,43 @@ tbody td {
 </div>
 
 <!-- ════ MODAL: STATUS ════ -->
+<!-- MODAL EMITIR LICENÇA -->
+<div class="overlay" id="m-emitir">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <div>
+        <h3 class="modal-title" id="m-emitir-titulo">Emitir Licença</h3>
+        <p id="m-emitir-proto" style="font-size:12px;color:var(--text3);margin:2px 0 0"></p>
+      </div>
+      <button class="modal-close" onclick="closeModal('m-emitir')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:var(--radius);padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--accent)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px;vertical-align:middle;margin-right:5px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        As condicionantes padrão são incluídas automaticamente. Adicione aqui apenas condicionantes específicas para este processo.
+      </div>
+      <div class="field">
+        <label>Condicionantes Adicionais</label>
+        <div id="emitir-cond-lista" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div>
+        <div style="display:flex;gap:8px">
+          <input id="emitir-cond-texto"
+            placeholder="Ex: Apresentar laudo técnico em 30 dias..."
+            style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:9px 12px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();adicionarCondicionanteEmissao()}">
+          <button type="button" class="btn btn-ghost" onclick="adicionarCondicionanteEmissao()" style="flex-shrink:0;white-space:nowrap">+ Adicionar</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('m-emitir')">Cancelar</button>
+      <button class="btn btn-primary" id="m-emitir-btn" onclick="confirmarEmissao()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+        Emitir Licença
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="m-status">
   <div class="modal" style="max-width:460px">
     <div class="modal-header">
@@ -2289,8 +2313,8 @@ function openModalNovo() {
   document.getElementById('np-uf').value = 'PB';
   document.getElementById('np-tipo').value = '';
   document.getElementById('np-status').value = 'Aguardando Documentos';
-  document.getElementById('docs-lista').innerHTML = '';
-  document.getElementById('cond-lista').innerHTML = '';
+  const docsLista = document.getElementById('docs-lista');
+  if (docsLista) docsLista.innerHTML = '';
   const secProp = document.getElementById('secao-proprietario');
   if (secProp) secProp.style.display = 'none';
   STATE.docsTemp = [];
@@ -2818,17 +2842,82 @@ async function confirmStatus() {
 // EMITIR LICENÇA
 // ════════════════════════════════════════════
 
-async function emitirLicenca(id) {
+// ── EMISSÃO DE LICENÇA ── abre modal com condicionantes ──────────────
+
+var EMITIR_ID    = null;
+var EMITIR_CONDS = [];
+
+function abrirModalEmitir(id, modo) {
   const p = STATE.processos.find(x => x.id === id);
   if (!p) return;
+  EMITIR_ID    = id;
+  EMITIR_CONDS = (p.conds || []).slice();
 
-  // Busca próximo número do GAS (ou usa localStorage como fallback)
+  const titulo = document.getElementById('m-emitir-titulo');
+  const proto  = document.getElementById('m-emitir-proto');
+  const btn    = document.getElementById('m-emitir-btn');
+  if (titulo) titulo.textContent = modo === 'assinar' ? 'Assinar e Emitir Licença' : 'Emitir Licença';
+  if (proto)  proto.textContent  = `${p.id} — ${p.req}`;
+  if (btn) {
+    btn.innerHTML = modo === 'assinar'
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><polyline points="20 6 9 17 4 12"/></svg> Assinar e Emitir'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg> Emitir Licença';
+    btn.setAttribute('data-modo', modo || 'emitir');
+  }
+  const inp = document.getElementById('emitir-cond-texto');
+  if (inp) inp.value = '';
+  renderCondicionantesEmissao();
+  closeModal('m-detalhe');
+  openModal('m-emitir');
+}
+
+function renderCondicionantesEmissao() {
+  const lista = document.getElementById('emitir-cond-lista');
+  if (!lista) return;
+  lista.innerHTML = EMITIR_CONDS.map((c, i) =>
+    `<div style="display:flex;align-items:center;gap:8px;background:var(--accent-bg);border:1px solid var(--accent-border);border-radius:8px;padding:7px 10px">
+      <span style="font-size:12px;color:var(--text);flex:1">${i+1}. ${c}</span>
+      <button onclick="removerCondEmissao(${i})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;line-height:1;padding:0;flex-shrink:0">&#x2715;</button>
+    </div>`
+  ).join('');
+}
+
+function adicionarCondicionanteEmissao() {
+  const input = document.getElementById('emitir-cond-texto');
+  const texto = input ? input.value.trim() : '';
+  if (!texto) return;
+  EMITIR_CONDS.push(texto);
+  if (input) input.value = '';
+  renderCondicionantesEmissao();
+}
+
+function removerCondEmissao(idx) {
+  EMITIR_CONDS.splice(idx, 1);
+  renderCondicionantesEmissao();
+}
+
+async function confirmarEmissao() {
+  const btn  = document.getElementById('m-emitir-btn');
+  const modo = btn ? btn.getAttribute('data-modo') : 'emitir';
+  closeModal('m-emitir');
+  if (modo === 'assinar') {
+    await _assinarComConds(EMITIR_ID, EMITIR_CONDS);
+  } else {
+    await _emitirComConds(EMITIR_ID, EMITIR_CONDS);
+  }
+}
+
+async function emitirLicenca(id) { abrirModalEmitir(id, 'emitir'); }
+async function assinarLicenca(id) { abrirModalEmitir(id, 'assinar'); }
+
+async function _emitirComConds(id, condsAdicionais) {
+  const p = STATE.processos.find(x => x.id === id);
+  if (!p) return;
+  p.conds = condsAdicionais;
+
   let proximoNum = null;
   if (STATE.gasUrl) {
-    try {
-      const res = await gasGET('proximoNumero', { tipo: p.tipo });
-      proximoNum = res.num;
-    } catch(e) { console.warn('Falha ao buscar contador do GAS:', e); }
+    try { const res = await gasGET('proximoNumero', { tipo: p.tipo }); proximoNum = res.num; } catch(e) {}
   }
   if (!proximoNum) {
     const cnts = JSON.parse(localStorage.getItem('sema_cnt') || '{}');
@@ -2837,91 +2926,62 @@ async function emitirLicenca(id) {
     proximoNum = cnts[p.tipo];
   }
 
-  const prefixes = { Dispensa:'DISP', LAC:'LAC', LS:'LS', LP:'LP', LI:'LI', LO:'LO', LAI:'LAI', LAO:'LAO', LIO:'LIO', LRO:'LRO', LVPE:'LVPE', AA:'AA' };
+  const prefixes = { Dispensa:'DISP',LAC:'LAC',LS:'LS',LP:'LP',LI:'LI',LO:'LO',LAI:'LAI',LAO:'LAO',LIO:'LIO',LRO:'LRO',LVPE:'LVPE',AA:'AA' };
   const num     = `${prefixes[p.tipo]||p.tipo}-${new Date().getFullYear()}-${String(proximoNum).padStart(3,'0')}`;
   const emissao = new Date().toISOString().split('T')[0];
-
   const valDias = VALIDADES[p.tipo] || 365;
-  const valDate = new Date();
-  valDate.setDate(valDate.getDate() + valDias);
+  const valDate = new Date(); valDate.setDate(valDate.getDate() + valDias);
   const validade = valDate.toISOString().split('T')[0];
-
   const isGestor = STATE.user && STATE.user.role === 'Gestor';
-  const licenca = { num, proto: p.id, req: p.req, tipo: p.tipo, emissao, validade,
+  const licenca  = { num, proto: p.id, req: p.req, tipo: p.tipo, emissao, validade,
     status: isGestor ? 'Emitida' : 'Aguardando Assinatura' };
   STATE.licencas.push(licenca);
   p.status = isGestor ? 'Emitido' : 'Aguardando Assinatura';
-  p.hist.push({ d: emissao, t: isGestor ? `Licença emitida: ${num}` : `Licença gerada (aguardando assinatura do gestor): ${num}` });
-
-  closeModal('m-detalhe');
-  renderDash();
-  updateBadges();
-  renderProcessos();
-
+  p.hist.push({ d: emissao, t: isGestor ? `Licença emitida: ${num}` : `Licença aguardando assinatura: ${num}` });
+  renderDash(); updateBadges(); renderProcessos();
   if (isGestor) {
     toast(`Licença ${num} emitida! Gerando PDF...`, 'ok');
-    const navLic = document.querySelector('[onclick*="licencas"]');
-    goTo('licencas', navLic);
+    goTo('licencas', document.querySelector('[onclick*="licencas"]'));
     renderLicencas();
     setTimeout(() => gerarPDF(licenca), 600);
   } else {
     toast(`Licença ${num} aguardando assinatura do gestor.`, 'ok');
-    if (STATE.gasUrl) {
-      try {
-        await gasPOST('notificarGestor', {
-          proto: p.id, req: p.req, tipo: p.tipo,
-          mensagem: 'Licença aguardando sua assinatura.'
-        });
-      } catch(e) {}
-    }
+    if (STATE.gasUrl) { try { await gasPOST('notificarGestor', { proto: p.id, req: p.req, tipo: p.tipo, mensagem: 'Licença aguardando sua assinatura.' }); } catch(e) {} }
   }
-
   if (STATE.gasUrl) {
     try {
-      await gasPOST('salvarLicenca', { dados: licenca });
+      await gasPOST('salvarLicenca',  { dados: licenca });
       await gasPOST('salvarProcesso', { dados: p });
-      await gasPOST('salvarHistorico', { proto: p.id, data: emissao,
-        texto: isGestor ? `Licenca emitida: ${num}` : `Licenca gerada aguardando assinatura: ${num}` });
-    } catch(e) { console.warn('Falha ao sincronizar licença com GAS:', e); }
+      await gasPOST('salvarHistorico', { proto: p.id, data: emissao, texto: isGestor ? `Licenca emitida: ${num}` : `Licenca aguardando assinatura: ${num}` });
+    } catch(e) { console.warn('GAS sync:', e); }
   }
 }
 
-async function assinarLicenca(id) {
+async function _assinarComConds(id, condsAdicionais) {
   const p = STATE.processos.find(x => x.id === id);
   if (!p) return;
   const licenca = STATE.licencas.find(x => x.proto === id && x.status === 'Aguardando Assinatura');
   if (!licenca) { toast('Licença pendente não encontrada.', 'err'); return; }
-
+  p.conds = condsAdicionais;
   const hoje = new Date().toISOString().split('T')[0];
-  licenca.status = 'Emitida';
-  licenca.dataAssinatura = hoje;
+  licenca.status = 'Emitida'; licenca.dataAssinatura = hoje;
+  p.status = 'Emitido';
   p.hist.push({ d: hoje, t: `Licença ${licenca.num} assinada por ${STATE.user.name}.` });
-
-  closeModal('m-detalhe');
-  renderDash();
-  updateBadges();
-  renderProcessos();
+  closeModal('m-detalhe'); renderDash(); updateBadges(); renderProcessos();
   toast(`Licença ${licenca.num} assinada! Gerando PDF...`, 'ok');
-
-  const navLic = document.querySelector('[onclick*="licencas"]');
-  goTo('licencas', navLic);
+  goTo('licencas', document.querySelector('[onclick*="licencas"]'));
   renderLicencas();
   setTimeout(() => gerarPDF(licenca), 600);
-
   if (STATE.gasUrl) {
     try {
-      await gasPOST('salvarLicenca', { dados: licenca });
+      await gasPOST('salvarLicenca',  { dados: licenca });
       await gasPOST('salvarProcesso', { dados: p });
       await gasPOST('salvarHistorico', { proto: p.id, data: hoje, texto: `Licenca ${licenca.num} assinada por ${STATE.user.name}.` });
-      if (p.email) {
-        await gasPOST('notificarCidadao', {
-          email: p.email, nome: p.req, proto: p.id,
-          mensagem: `Sua licença ${licenca.num} foi emitida e está disponível no portal.`
-        });
-      }
-    } catch(e) { console.warn('Falha ao sincronizar assinatura com GAS:', e); }
+      if (p.email) await gasPOST('notificarCidadao', { email: p.email, nome: p.req, proto: p.id, mensagem: `Sua licença ${licenca.num} foi emitida e assinada. Acesse o portal para visualizar.` });
+    } catch(e) { console.warn('GAS sync:', e); }
   }
 }
+
 
 // ════════════════════════════════════════════
 // CONFIG
@@ -3767,31 +3827,6 @@ async function gerarPDF(licenca) {
 
   doc.save(licenca.num + '.pdf');
   toast('PDF ' + licenca.num + ' gerado!', 'ok');
-}
-function adicionarCondicionante() {
-  const input = document.getElementById('np-cond-texto');
-  const texto = input.value.trim();
-  if (!texto) return;
-  if (!STATE.condTemp) STATE.condTemp = [];
-  STATE.condTemp.push(texto);
-  renderCondList();
-  input.value = '';
-  input.focus();
-}
-
-function removerCondicionante(idx) {
-  STATE.condTemp.splice(idx, 1);
-  renderCondList();
-}
-
-function renderCondList() {
-  const lista = document.getElementById('cond-lista');
-  lista.innerHTML = (STATE.condTemp || []).map((c, i) => `
-    <div style="display:flex;align-items:flex-start;gap:8px;background:var(--amber-bg);border:1px solid rgba(251,191,36,0.2);border-radius:var(--radius);padding:8px 12px;font-size:12px;color:var(--amber)">
-      <span style="flex:1">${i + 8}. ${c}</span>
-      <button onclick="removerCondicionante(${i})" style="background:none;border:none;color:var(--amber);cursor:pointer;font-size:14px;opacity:0.7;flex-shrink:0;padding:0" title="Remover">×</button>
-    </div>
-  `).join('');
 }
 
 // ════════════════════════════════════════════
