@@ -900,28 +900,41 @@ body { font-family: var(--ff-body); background: var(--bg); color: var(--text); m
 
 <!-- TELA CONSULTA PÚBLICA (sem login) -->
 <div id="tela-verificar" style="display:none;min-height:100vh;background:#f0f4f1;align-items:center;justify-content:center;padding:24px">
-  <div style="background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.08);max-width:520px;width:100%;padding:32px">
+  <div style="background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.08);max-width:540px;width:100%;padding:32px">
     <div style="text-align:center;margin-bottom:24px">
       <img id="ver-brasao" style="width:64px;height:64px;border-radius:12px;margin-bottom:12px" alt="SEMMA">
       <h2 style="font-size:18px;font-weight:700;color:#0f2d1a;margin:0">Autenticidade de Licença</h2>
       <p style="font-size:13px;color:#6b7280;margin:6px 0 0">SEMMA — Serra Redonda/PB</p>
     </div>
-    <div id="ver-loading" style="text-align:center;padding:20px;color:#6b7280;font-size:14px">Verificando licença...</div>
+
+    <!-- Campo de busca sempre visível -->
+    <div style="display:flex;gap:8px;margin-bottom:20px">
+      <input id="ver-input-num" placeholder="Nº da Licença (ex: LAI-2026-001)"
+        style="flex:1;padding:10px 12px;border:1.5px solid #d1d5db;border-radius:8px;font-size:13px;font-family:monospace;outline:none"
+        onfocus="this.style.borderColor='#0a3d2e'" onblur="this.style.borderColor='#d1d5db'"
+        onkeydown="if(event.key==='Enter') buscarLicencaNaTela()">
+      <button onclick="buscarLicencaNaTela()"
+        style="padding:10px 16px;background:#0a3d2e;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">
+        Verificar
+      </button>
+    </div>
+
+    <div id="ver-loading" style="text-align:center;padding:20px;color:#6b7280;font-size:14px;display:none">Verificando licença...</div>
     <div id="ver-resultado" style="display:none">
       <div id="ver-badge" style="text-align:center;margin-bottom:20px"></div>
       <table style="width:100%;border-collapse:collapse;font-size:13px">
-        <tr><td style="padding:8px 0;color:#6b7280;width:40%">Número</td><td id="ver-num" style="font-weight:600;font-family:monospace"></td></tr>
-        <tr><td style="padding:8px 0;color:#6b7280">Tipo</td><td id="ver-tipo" style="font-weight:500"></td></tr>
-        <tr><td style="padding:8px 0;color:#6b7280">Requerente</td><td id="ver-req"></td></tr>
-        <tr><td style="padding:8px 0;color:#6b7280">Atividade</td><td id="ver-ativ"></td></tr>
-        <tr><td style="padding:8px 0;color:#6b7280">Emissão</td><td id="ver-emissao"></td></tr>
-        <tr><td style="padding:8px 0;color:#6b7280">Validade</td><td id="ver-validade" style="font-weight:600"></td></tr>
+        <tr><td style="padding:8px 0;color:#6b7280;width:40%;vertical-align:top">Número</td><td id="ver-num" style="font-weight:600;font-family:monospace"></td></tr>
+        <tr><td style="padding:8px 0;color:#6b7280;vertical-align:top">Tipo</td><td id="ver-tipo" style="font-weight:500"></td></tr>
+        <tr><td style="padding:8px 0;color:#6b7280;vertical-align:top">Requerente</td><td id="ver-req"></td></tr>
+        <tr><td style="padding:8px 0;color:#6b7280;vertical-align:top">Atividade</td><td id="ver-ativ"></td></tr>
+        <tr><td style="padding:8px 0;color:#6b7280;vertical-align:top">Emissão</td><td id="ver-emissao"></td></tr>
+        <tr><td style="padding:8px 0;color:#6b7280;vertical-align:top">Validade</td><td id="ver-validade" style="font-weight:600"></td></tr>
       </table>
     </div>
     <div id="ver-erro" style="display:none;text-align:center;padding:20px">
       <div style="font-size:32px;margin-bottom:8px">⚠️</div>
-      <p style="color:#dc2626;font-weight:600">Licença não encontrada</p>
-      <p style="font-size:12px;color:#6b7280">O número informado não corresponde a nenhuma licença emitida por esta secretaria.</p>
+      <p style="color:#dc2626;font-weight:600;margin-bottom:4px">Licença não encontrada</p>
+      <p style="font-size:12px;color:#6b7280">Verifique se o número está correto e se a licença foi emitida pelo sistema.</p>
     </div>
     <div style="margin-top:20px;text-align:center">
       <a href="portal.html" style="font-size:12px;color:#0369a1;text-decoration:none">← Acessar Portal do Cidadão</a>
@@ -3114,12 +3127,56 @@ function verificarLicencaPublica() {
 }
 
 
-(function verificarConsultaPublica() {
-  var params = new URLSearchParams(window.location.search);
-  var numLic = params.get('verificar');
-  if (!numLic) return;
+// ── CONSULTA PÚBLICA ?verificar=NUMERO ──────────────────────────────
 
-  // Esconde telas de login e portal, mostra tela de verificação
+var GAS_URL_PUBLICA = 'https://script.google.com/macros/s/AKfycbwz4OVxczTLgaXjr7svcvYRi_6bW_es4Os-3UkzVuBPvY5XeE3kwPAwgxBA_MUHS8FA5A/exec';
+
+// JSONP — contorna CORS para chamadas públicas sem login
+function gasGetPublico(acao, params) {
+  return new Promise(function(resolve, reject) {
+    var cbName = '_gascb_' + Date.now() + '_' + Math.floor(Math.random() * 9999);
+    var gasUrl = localStorage.getItem('sema_gas_url') || GAS_URL_PUBLICA;
+    var url = gasUrl + '?acao=' + encodeURIComponent(acao) + '&callback=' + cbName;
+    Object.keys(params || {}).forEach(function(k) {
+      url += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+    });
+
+    var timeout = setTimeout(function() {
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+      reject(new Error('Timeout na verificação'));
+    }, 10000);
+
+    window[cbName] = function(data) {
+      clearTimeout(timeout);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+      resolve(data);
+    };
+
+    var script = document.createElement('script');
+    script.src = url;
+    script.onerror = function() {
+      clearTimeout(timeout);
+      delete window[cbName];
+      reject(new Error('Erro ao acessar o servidor'));
+    };
+    document.head.appendChild(script);
+  });
+}
+
+function buscarLicencaNaTela() {
+  var inp = document.getElementById('ver-input-num');
+  var num = inp ? inp.value.trim().toUpperCase() : '';
+  if (!num) {
+    if (inp) { inp.style.borderColor='#ef4444'; setTimeout(function(){ inp.style.borderColor='#d1d5db'; }, 2000); }
+    return;
+  }
+  history.replaceState(null, '', 'portal.html?verificar=' + encodeURIComponent(num));
+  executarVerificacao(num);
+}
+
+function executarVerificacao(numLic) {
   var telaLogin  = document.getElementById('tela-login');
   var telaPortal = document.getElementById('portal-app');
   var telaVer    = document.getElementById('tela-verificar');
@@ -3127,59 +3184,46 @@ function verificarLicencaPublica() {
   if (telaPortal) telaPortal.style.display = 'none';
   if (telaVer)    telaVer.style.display    = 'flex';
 
-  // Setar brasão se disponível
   var brasaoEl = document.getElementById('brasao-portal');
   var verBrasao = document.getElementById('ver-brasao');
   if (brasaoEl && verBrasao) verBrasao.src = brasaoEl.src;
 
-  // Carregar GAS URL
-  var gasUrl = localStorage.getItem('sema_gas_url') || '';
+  var inp = document.getElementById('ver-input-num');
+  if (inp) inp.value = numLic;
 
-  function gasGetPublico(acao, params) {
-    if (!gasUrl) return Promise.reject(new Error('GAS URL não configurada'));
-    var url = new URL(gasUrl);
-    url.searchParams.set('acao', acao);
-    Object.keys(params || {}).forEach(function(k) { url.searchParams.set(k, params[k]); });
-    return fetch(url.toString()).then(function(r) { return r.json(); });
-  }
+  var loading   = document.getElementById('ver-loading');
+  var resultado = document.getElementById('ver-resultado');
+  var erro      = document.getElementById('ver-erro');
+  if (loading)   loading.style.display   = 'block';
+  if (resultado) resultado.style.display = 'none';
+  if (erro)      erro.style.display      = 'none';
 
   gasGetPublico('verificarLicenca', { num: numLic }).then(function(res) {
-    var loading = document.getElementById('ver-loading');
-    var resultado = document.getElementById('ver-resultado');
-    var erro = document.getElementById('ver-erro');
     if (loading) loading.style.display = 'none';
-
     if (!res || !res.ok || !res.licenca) {
       if (erro) erro.style.display = 'block';
       return;
     }
-
     var l = res.licenca;
     if (resultado) resultado.style.display = 'block';
 
     var badge = document.getElementById('ver-badge');
     if (badge) {
       badge.innerHTML = l.vigente
-        ? '<div style="display:inline-flex;align-items:center;gap:8px;background:#f0fdf4;border:2px solid #16a34a;border-radius:99px;padding:8px 20px"><span style="color:#16a34a;font-size:18px">✓</span><span style="color:#15803d;font-weight:700;font-size:15px">LICENÇA VIGENTE</span></div>'
-        : '<div style="display:inline-flex;align-items:center;gap:8px;background:#fef2f2;border:2px solid #dc2626;border-radius:99px;padding:8px 20px"><span style="color:#dc2626;font-size:18px">✗</span><span style="color:#dc2626;font-weight:700;font-size:15px">LICENÇA VENCIDA</span></div>';
+        ? '<div style="display:inline-flex;align-items:center;gap:8px;background:#f0fdf4;border:2px solid #16a34a;border-radius:99px;padding:8px 20px"><span style="color:#16a34a;font-size:18px">&#10003;</span><span style="color:#15803d;font-weight:700;font-size:15px">LICENÇA VIGENTE</span></div>'
+        : '<div style="display:inline-flex;align-items:center;gap:8px;background:#fef2f2;border:2px solid #dc2626;border-radius:99px;padding:8px 20px"><span style="color:#dc2626;font-size:18px">&#10007;</span><span style="color:#dc2626;font-weight:700;font-size:15px">LICENÇA VENCIDA</span></div>';
     }
-
-    function fmtDataBR(s) {
+    function fmtBR(s) {
       if (!s) return '—';
-      var p = String(s).split('-');
+      var p = String(s).split('T')[0].split('-');
       return p.length === 3 ? p[2]+'/'+p[1]+'/'+p[0] : s;
     }
-
-    var setEl = function(id, val) { var el = document.getElementById(id); if (el) el.textContent = val || '—'; };
-    setEl('ver-num',     l.num);
-    setEl('ver-tipo',    l.tipo);
-    setEl('ver-req',     l.req);
-    setEl('ver-ativ',    l.atividade);
-    setEl('ver-emissao', fmtDataBR(l.emissao));
-
+    var set = function(id, v) { var e = document.getElementById(id); if (e) e.textContent = v||'—'; };
+    set('ver-num', l.num); set('ver-tipo', l.tipo); set('ver-req', l.req);
+    set('ver-ativ', l.atividade); set('ver-emissao', fmtBR(l.emissao));
     var valEl = document.getElementById('ver-validade');
     if (valEl) {
-      valEl.textContent = fmtDataBR(l.validade);
+      valEl.textContent = fmtBR(l.validade);
       valEl.style.color = l.vigente ? '#15803d' : '#dc2626';
       if (l.diasRestantes !== null) {
         valEl.textContent += l.vigente
@@ -3188,13 +3232,18 @@ function verificarLicencaPublica() {
       }
     }
   }).catch(function(e) {
-    var loading = document.getElementById('ver-loading');
-    var erro = document.getElementById('ver-erro');
     if (loading) loading.style.display = 'none';
     if (erro) erro.style.display = 'block';
-    console.error('Erro ao verificar licença:', e);
+    console.error('Erro:', e);
   });
+}
+
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  var numLic = params.get('verificar');
+  if (numLic) executarVerificacao(numLic);
 })();
+
 
 
 // Item 11: sanitização básica contra XSS
