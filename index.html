@@ -1192,18 +1192,8 @@ tbody td {
         <!-- DASHBOARD -->
         <div class="screen active" id="screen-dashboard">
           <div class="metrics" id="metrics"></div>
-          <!-- Item 9: gráficos -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px" id="dash-graficos">
-            <div class="card" style="padding:20px">
-              <div class="card-title" style="margin-bottom:14px;font-size:13px">Processos por Status</div>
-              <canvas id="chart-status" height="180"></canvas>
-            </div>
-            <div class="card" style="padding:20px">
-              <div class="card-title" style="margin-bottom:14px;font-size:13px">Aberturas nos últimos 6 meses</div>
-              <canvas id="chart-mensal" height="180"></canvas>
-            </div>
-          </div>
-          <div class="card">
+          <!-- Processos recentes acima dos gráficos -->
+          <div class="card" style="margin-bottom:16px">
             <div class="card-header">
               <div class="card-title">Processos Recentes</div>
               <button class="btn btn-ghost" style="font-size:11px" onclick="goTo('processos',null)">Ver todos →</button>
@@ -1221,6 +1211,17 @@ tbody td {
               </thead>
               <tbody id="dash-tbody"></tbody>
             </table>
+          </div>
+          <!-- Gráficos abaixo da tabela -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px" id="dash-graficos">
+            <div class="card" style="padding:20px">
+              <div class="card-title" style="margin-bottom:14px;font-size:13px">Processos por Status</div>
+              <canvas id="chart-status" height="180"></canvas>
+            </div>
+            <div class="card" style="padding:20px">
+              <div class="card-title" style="margin-bottom:14px;font-size:13px">Aberturas nos últimos 6 meses</div>
+              <canvas id="chart-mensal" height="180"></canvas>
+            </div>
           </div>
         </div>
 
