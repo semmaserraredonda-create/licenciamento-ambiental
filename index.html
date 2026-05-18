@@ -1117,7 +1117,7 @@ tbody td {
       </div>
 
       <div class="nav-section">Processos</div>
-      <div class="nav-item" onclick="goTo('processos',this)">
+      <div class="nav-item" onclick="goTo('processos',this);limparFiltros()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         Todos os Processos
         <span class="nav-badge" id="nb-total">0</span>
@@ -2346,6 +2346,7 @@ function limparFiltros() {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
+  STATE.filtroMsgCidadao = false;
   STATE.page = 1;
   renderProcessos();
 }

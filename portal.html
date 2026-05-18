@@ -1845,7 +1845,7 @@ async function enviarMensagemCidadao(proto) {
 // ── BADGE DE MENSAGEM NÃO LIDA ───────────────────────────────────────
 
 function getMsgsLidasKey() {
-  return 'sema_msgs_lidas_' + (PORTAL.user ? PORTAL.user.email : 'anon');
+  return 'sema_portal_msgs_lidas_' + (PORTAL.user ? PORTAL.user.email : 'anon');
 }
 
 function verificarMensagensNaoLidas() {
@@ -1877,6 +1877,8 @@ function marcarMensagensLidas(proto) {
   });
   localStorage.setItem(getMsgsLidasKey(), JSON.stringify(lidas));
   verificarMensagensNaoLidas();
+  // Atualiza os cards da lista para remover o ícone de nova mensagem
+  renderProcessos();
 }
 
 // ── MEUS PROCESSOS ──
