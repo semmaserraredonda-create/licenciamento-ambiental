@@ -2970,7 +2970,7 @@ async function gerarPDFPortal(licenca, p) {
   doc.setTextColor(30,30,30);
 
   // QR Code
-  var qrUrl = 'https://semmaserraredonda.github.io/sema-licenciamento/portal.html?verificar='+encodeURIComponent(licenca.num);
+  var qrUrl = window.location.protocol + '//' + window.location.host + window.location.pathname.replace(/\/[^\/]*$/, '/') + 'portal.html?verificar=' + encodeURIComponent(licenca.num);
   var qx = W-MR-28, qy = y-32, qs = 28;
   try {
     await new Promise(function(resolve, reject) {

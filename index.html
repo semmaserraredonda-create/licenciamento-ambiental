@@ -3718,7 +3718,7 @@ function visualizarLicenca(licenca) {
   openModal('m-preview');
 
   // Gerar QR Code real no modal após renderizar
-  const qrUrl = `https://semmaserraredonda.github.io/sema-licenciamento/portal.html?verificar=${encodeURIComponent(licenca.num)}`;
+  const qrUrl = window.location.protocol + '//' + window.location.host + window.location.pathname.replace(/\/[^\/]*$/, '/') + 'portal.html?verificar=' + encodeURIComponent(licenca.num);
   const qrContainerId = `prev-qrcode-${licenca.num.replace(/[^A-Z0-9]/g,'')}`;
   setTimeout(async () => {
     if (!window.QRCode) {
@@ -3791,7 +3791,7 @@ async function gerarPDF(licenca) {
   // Gera QR Code real apontando para verificação pública
   let qrDataUrl = null;
   try {
-    const qrText = `https://semmaserraredonda.github.io/sema-licenciamento/portal.html?verificar=${licenca.num}`;
+    const qrText = window.location.protocol + '//' + window.location.host + window.location.pathname.replace(/\/[^\/]*$/, '/') + 'portal.html?verificar=' + encodeURIComponent(licenca.num);
     const qrDiv = document.createElement('div');
     qrDiv.style.cssText = 'position:absolute;left:-9999px;top:0;width:128px;height:128px;background:#fff';
     document.body.appendChild(qrDiv);
