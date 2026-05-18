@@ -3131,38 +3131,47 @@ function verificarLicencaPublica() {
 
 var GAS_URL_PUBLICA = 'https://script.google.com/macros/s/AKfycbwz4OVxczTLgaXjr7svcvYRi_6bW_es4Os-3UkzVuBPvY5XeE3kwPAwgxBA_MUHS8FA5A/exec';
 
-// JSONP — contorna CORS para chamadas públicas sem login
+// gasGetPublico: tenta fetch direto (funciona se GAS publicado como "Qualquer pessoa")
+// Se falhar por CORS, usa JSONP como fallback
 function gasGetPublico(acao, params) {
-  return new Promise(function(resolve, reject) {
-    var cbName = '_gascb_' + Date.now() + '_' + Math.floor(Math.random() * 9999);
-    var gasUrl = localStorage.getItem('sema_gas_url') || GAS_URL_PUBLICA;
-    var url = gasUrl + '?acao=' + encodeURIComponent(acao) + '&callback=' + cbName;
-    Object.keys(params || {}).forEach(function(k) {
-      url += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
-    });
-
-    var timeout = setTimeout(function() {
-      delete window[cbName];
-      if (script.parentNode) script.parentNode.removeChild(script);
-      reject(new Error('Timeout na verificação'));
-    }, 10000);
-
-    window[cbName] = function(data) {
-      clearTimeout(timeout);
-      delete window[cbName];
-      if (script.parentNode) script.parentNode.removeChild(script);
-      resolve(data);
-    };
-
-    var script = document.createElement('script');
-    script.src = url;
-    script.onerror = function() {
-      clearTimeout(timeout);
-      delete window[cbName];
-      reject(new Error('Erro ao acessar o servidor'));
-    };
-    document.head.appendChild(script);
+  var gasUrl = localStorage.getItem('sema_gas_url') || GAS_URL_PUBLICA;
+  var qs = 'acao=' + encodeURIComponent(acao);
+  Object.keys(params || {}).forEach(function(k) {
+    qs += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
   });
+  var url = gasUrl + '?' + qs;
+
+  // Tenta fetch direto primeiro
+  return fetch(url)
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .catch(function() {
+      // Fallback JSONP — contorna CORS injetando <script>
+      return new Promise(function(resolve, reject) {
+        var cbName = '_gascb_' + Date.now();
+        var timeout = setTimeout(function() {
+          delete window[cbName];
+          if (script && script.parentNode) script.parentNode.removeChild(script);
+          reject(new Error('Timeout'));
+        }, 12000);
+        window[cbName] = function(data) {
+          clearTimeout(timeout);
+          delete window[cbName];
+          if (script && script.parentNode) script.parentNode.removeChild(script);
+          resolve(data);
+        };
+        var script = document.createElement('script');
+        script.src = url + '&callback=' + cbName;
+        script.onerror = function() {
+          clearTimeout(timeout);
+          delete window[cbName];
+          reject(new Error('Erro de rede'));
+        };
+        document.head.appendChild(script);
+      });
+    });
 }
 
 function buscarLicencaNaTela() {
