@@ -3093,6 +3093,8 @@ function fmtCoordPortal(input, isLat) {
 
 // ── ITEM 9: Restaurar sessão ao recarregar ───────────────────────────
 (function restaurarSessaoPortal() {
+  // Não restaurar sessão se estamos verificando uma licença
+  if (new URLSearchParams(window.location.search).get("verificar")) return;
   try {
     var salvo = sessionStorage.getItem('sema_portal_user');
     if (salvo) {
@@ -3247,11 +3249,27 @@ function executarVerificacao(numLic) {
   });
 }
 
+// Verificação via ?verificar= tem PRIORIDADE — roda antes de qualquer outra lógica
 (function() {
   var params = new URLSearchParams(window.location.search);
   var numLic = params.get('verificar');
-  if (numLic) executarVerificacao(numLic);
+  if (!numLic) return;
+  // Esconde tudo imediatamente, antes mesmo do DOMContentLoaded
+  document.addEventListener('DOMContentLoaded', function() {
+    var el;
+    el = document.getElementById('tela-login');  if (el) el.style.display = 'none';
+    el = document.getElementById('portal-app');  if (el) el.style.display = 'none';
+    executarVerificacao(numLic);
+  });
+  // Se já carregou, executa agora
+  if (document.readyState !== 'loading') {
+    var el;
+    el = document.getElementById('tela-login');  if (el) el.style.display = 'none';
+    el = document.getElementById('portal-app');  if (el) el.style.display = 'none';
+    executarVerificacao(numLic);
+  }
 })();
+
 
 
 
