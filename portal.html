@@ -1598,14 +1598,16 @@ async function iniciarPortal() {
 }
 
 async function carregarDados() {
-  showLoad('Buscando seus processos...');
+  showLoad('Buscando seus dados...');
   try {
-    var [rProc, rLic] = await Promise.all([
-      gasPost('listarProcessosRequerente', { email: PORTAL.user.email }),
-      gasPost('listarLicencasRequerente',  { email: PORTAL.user.email }),
+    var [rProc, rLic, rEmp] = await Promise.all([
+      gasPost('listarProcessosRequerente',       { email: PORTAL.user.email }),
+      gasPost('listarLicencasRequerente',        { email: PORTAL.user.email }),
+      gasPost('listarEmpreendimentosRequerente', { email: PORTAL.user.email }),
     ]);
     PORTAL.processos = rProc.processos || [];
     PORTAL.licencas  = rLic.licencas   || [];
+    EMPREENDIMENTOS  = rEmp.empreendimentos || [];
 
     // Normaliza permitir_upload — garante booleano independente do que o GAS retornar
     PORTAL.processos.forEach(function(p) {
@@ -1622,6 +1624,7 @@ async function carregarDados() {
   } finally { hideLoad(); }
   renderProcessos();
   renderLicencas();
+  renderEmpTela();
   verificarMensagensNaoLidas();
 }
 
@@ -1690,11 +1693,23 @@ function usarEmpreendimento(idx) {
 function removerEmpreendimento(idx) {
   var e = EMPREENDIMENTOS[idx];
   if (!confirm('Remover "' + e.nome + '"? Esta ação não pode ser desfeita.')) return;
-  EMPREENDIMENTOS.splice(idx, 1);
-  if (EMP_IDX === idx) { EMP_IDX = -1; EMP_SELECIONADO = null; }
-  else if (EMP_IDX > idx) { EMP_IDX--; }
-  renderEmpTela();
-  toast('Empreendimento removido.', 'ok');
+
+  showLoad('Removendo empreendimento...');
+  gasPost('removerEmpreendimento', { id: e.id, emailRequerente: PORTAL.user ? PORTAL.user.email : '' }).then(function(res) {
+    hideLoad();
+    if (res && res.ok) {
+      EMPREENDIMENTOS.splice(idx, 1);
+      if (EMP_IDX === idx) { EMP_IDX = -1; EMP_SELECIONADO = null; }
+      else if (EMP_IDX > idx) { EMP_IDX--; }
+      renderEmpTela();
+      toast('Empreendimento removido.', 'ok');
+    } else {
+      toast('Erro ao remover: ' + ((res && res.erro) ? res.erro : 'tente novamente.'), 'err');
+    }
+  }).catch(function(e) {
+    hideLoad();
+    toast('Erro de conexão ao remover empreendimento.', 'err');
+  });
 }
 
 // ── UPLOAD NO DETALHE DO PROCESSO ────────────────────────────────────
@@ -2470,13 +2485,29 @@ function salvarEmpreendimento() {
   var partes = [logr, num, bairro, cidade && uf ? cidade+'/'+uf : cidade, cep ? 'CEP '+cep : ''].filter(Boolean);
   var end = partes.join(', ');
 
-  var novo = { nome: nome, doc: doc, ativ: ativ, tel: tel, email: email, end: end, lat: lat, lon: lon };
-  EMPREENDIMENTOS.push(novo);
-  EMP_IDX = EMPREENDIMENTOS.length - 1;
-  EMP_SELECIONADO = novo;
-  fecharModalEmp();
-  renderEmpreendimentos();
-  toast('Empreendimento cadastrado e selecionado!', 'ok');
+  var novo = { nome: nome, doc: doc, ativ: ativ, tel: tel, email: email, end: end, lat: lat, lon: lon,
+    emailRequerente: PORTAL.user ? PORTAL.user.email : '' };
+
+  showLoad('Salvando empreendimento...');
+  gasPost('salvarEmpreendimento', { dados: novo }).then(function(res) {
+    hideLoad();
+    if (res && res.ok) {
+      if (res.id) novo.id = res.id;
+      EMPREENDIMENTOS.push(novo);
+      EMP_IDX = EMPREENDIMENTOS.length - 1;
+      EMP_SELECIONADO = novo;
+      fecharModalEmp();
+      renderEmpreendimentos();
+      renderEmpTela();
+      toast('Empreendimento cadastrado e selecionado!', 'ok');
+    } else {
+      toast('Erro ao salvar empreendimento: ' + ((res && res.erro) ? res.erro : 'tente novamente.'), 'err');
+    }
+  }).catch(function(e) {
+    hideLoad();
+    toast('Erro de conexão ao salvar empreendimento.', 'err');
+    console.error('salvarEmpreendimento:', e);
+  });
 }
 
 // ── COORDENADAS GMS — empreendimento ─────────────────────────────────
