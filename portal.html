@@ -2506,61 +2506,276 @@ function validarCoordenadaEmp(input, isLat) {
 }
 
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ATIVIDADES — Anexo Único, Lei Complementar nº 005/2025 — Serra Redonda/PB
+// Estrutura: { cod, nome, modalidade, prazo }
+//   modalidade → sigla da licença indicada na lei (Dispensa/LAC/LS/LP+LI+LO/AA/LVPE)
+//   prazo      → prazo de validade conforme quadros do Anexo Único
+// ─────────────────────────────────────────────────────────────────────────────
 var ATIVIDADES_CAT = [
-  { cat: 'Dispensa de Licenca', itens: [
-    'Residencia unifamiliar ate 200m2','Pequeno comercio ate 50m2','Igrejas e templos religiosos',
-    'Escola de ensino basico ate 500 alunos','Escritorio e servicos administrativos','Quiosques e barracas',
-    'Reforma e ampliacao de edificio ate 50% da area original',
+  { cat: "Agropecuária", itens: [
+    "Avicultura convencional (postura e corte)",
+    "Avicultura industrial (postura e corte)",
+    "Suinocultura (caipira/alternativa)",
+    "Suinocultura industrial",
+    "Ovinocaprinocultura (extensivo/semi-intensivo)",
+    "Ovinocaprinocultura intensiva",
+    "Bovinocultura e Bubalinocultura (extensivo)",
+    "Bovinocultura e Bubalinocultura (semi-extensivo/intensivo)",
+    "Carcinicultura",
+    "Piscicultura",
+    "Maricultura e ostreicultura",
+    "Ranicultura",
+    "Meliponicultura",
+    "Apicultura",
+    "Projeto agrícola de sequeiro sem agrotóxicos",
+    "Projeto agrícola de sequeiro com agrotóxicos",
+    "Projeto agrícola de sequeiro com crédito de descarbonização",
+    "Projeto agrícola irrigado sem agrotóxicos",
+    "Projeto agrícola irrigado com agrotóxicos",
+    "Projeto agrícola irrigado com crédito de descarbonização",
+    "Floricultura e fruticultura irrigada",
+    "Flores ornamentais em estufas",
+    "Central de triagem, embalagem e distribuição de produtos da agricultura familiar",
+    "Central de comercialização de produtos agropecuários da agricultura familiar",
+    "Produção artesanal de alimentos, bebidas e artesanatos de cunho social ou coletivo",
+    "Produção de artesanato por associações comunitárias"
   ]},
-  { cat: 'Agropecuaria', itens: [
-    'Avicultura convencional (frangos e galinhas)','Suinocultura','Bovinocultura de leite',
-    'Bovinocultura de corte','Piscicultura e aquicultura','Apicultura','Fruticultura',
-    'Silvicultura (plantio de arvores)','Ovinocultura e caprinocultura','Floricultura',
-    'Cultivo de hortalicas e jardins','Granjas e haras',
+  { cat: "Florestal", itens: [
+    "Autorização para Uso Alternativo do Solo (UAS)",
+    "Corte de Árvores Isoladas (CAI)",
+    "Registro e Homologação de Pátio no DOF (Documento de Origem Florestal)"
   ]},
-  { cat: 'Comercio e Servicos', itens: [
-    'Posto de combustivel e servicos','Supermercado e hipermercado','Restaurante e lanchonete',
-    'Hotel e pousada','Clinica medica e odontologica','Farmacia e drogaria',
-    'Oficina mecanica e borracharia','Lavagem de veiculos','Salao de beleza e barbearia',
-    'Academia de ginastica','Deposito e armazem','Feira e mercado publico',
-    'Shopping center e galeria comercial','Banco e financeira',
+  { cat: "Resíduos Sólidos", itens: [
+    "Coleta e transporte de Resíduos Classe II (não perigosos)",
+    "Coleta e transporte de Resíduos da Construção Civil (RCC)",
+    "Transporte de materiais recicláveis e reutilizáveis",
+    "Unidade de triagem de recicláveis",
+    "Unidade de compostagem de resíduos orgânicos",
+    "Unidade de triagem e compostagem combinadas",
+    "Central de recebimento e triagem de sucata metálica, papel, plástico e vidro",
+    "Estação de transbordo de resíduos sólidos urbanos",
+    "Estação de transbordo de resíduos de serviços de saúde (RSS)",
+    "Incineração ou queima de substâncias químicas, drogas ou entorpecentes por determinação judicial ou policial"
   ]},
-  { cat: 'Atividades Industriais', itens: [
-    'Beneficiamento de produtos agricolas','Fabricacao de moveis e esquadrias',
-    'Ceramica e olaria','Confeccoes e tecelagem','Padaria e confeitaria industrial',
-    'Metalurgia e serralheria','Industria grafica e editorial','Fabricacao de alimentos e bebidas',
-    'Industria de plasticos e borracha','Curtume e couros',
+  { cat: "Captação, Tratamento e Distribuição de Água", itens: [
+    "Cisterna domiciliar rural",
+    "Sistema simplificado de abastecimento de água (açude ou poço)",
+    "Projeto de poços",
+    "Sistema de dessalinizadores para abastecimento humano",
+    "Sistema de distribuição de água",
+    "Estação de Tratamento de Efluentes (ETE)",
+    "Estação Elevatória de Efluentes (EEE)",
+    "Interceptores, emissários e rede coletora de esgoto",
+    "Rede de drenagem",
+    "Barramento ou represamento de curso d'água natural",
+    "Recuperação de barragens",
+    "Barragens, açudes e represas",
+    "Barragens de derivação ou regularização de nível"
   ]},
-  { cat: 'Infraestrutura e Obras', itens: [
-    'Loteamento e parcelamento do solo','Pavimentacao e obras viarias',
-    'Canais e obras de irrigacao','Barragens e acudes','Torres de transmissao de energia',
-    'Linha de transmissao e distribuicao','Obra de saneamento basico',
-    'Terminal rodoviario e aeroporto','Porto e atracadouro',
+  { cat: "Comércio e Serviços em Geral", itens: [
+    "Microempreendedor Individual (MEI)",
+    "Sala de comércio ou serviço em empreendimento com Licença de Operação vigente",
+    "Bar, restaurante e similar",
+    "Padaria com uso de forno elétrico",
+    "Fabricação de doces",
+    "Casa de farinha comunitária",
+    "Beneficiamento de frutas comunitário",
+    "Frigorífico para estocagem e conservação de alimentos perecíveis",
+    "Comércio atacadista e varejista, supermercado, shopping e mercadinho",
+    "Comércio de materiais de construção civil",
+    "Estabelecimento comercial com uso de recursos florestais",
+    "Empresa de armazenamento e distribuição",
+    "Locadora de veículos",
+    "Empresa de serviços gerais",
+    "Lavanderia para peças domésticas",
+    "Sede de associações",
+    "Central de comercialização de artesanato e agricultura familiar",
+    "Estacionamento de veículos e motocicletas",
+    "Prestação de serviço de informática",
+    "Agência de notícias e publicidade",
+    "Agência de viagens",
+    "Aluguel de equipamentos recreativos e esportivos",
+    "Aluguel de produtos audiovisuais",
+    "Aluguel de máquinas e equipamentos para escritório",
+    "Aluguel de móveis, utensílios e aparelhos domésticos",
+    "Aluguel de objetos de vestuário, joias e acessórios",
+    "Gravação de som e edição de música",
+    "Monitoramento de sistemas de segurança eletrônico",
+    "Teleatendimento",
+    "Comércio varejista de antiguidades",
+    "Comércio varejista de artigos de armarinho",
+    "Comércio varejista de artigos de cama, mesa e banho",
+    "Comércio varejista de artigos de colchoaria",
+    "Comércio varejista de artigos de joalheria",
+    "Comércio varejista de artigos de papelaria",
+    "Comércio varejista de artigos de relojoaria",
+    "Comércio varejista de artigos de tapeçaria, cortinas e persianas",
+    "Comércio varejista de artigos de viagem",
+    "Comércio varejista de vestuário e acessórios",
+    "Comércio varejista de artigos esportivos",
+    "Comércio varejista de artigos fotográficos",
+    "Comércio varejista de brinquedos e artigos recreativos",
+    "Comércio varejista de calçados",
+    "Comércio varejista de produtos audiovisuais",
+    "Comércio varejista de equipamentos para escritório",
+    "Comércio varejista de jornais e revistas",
+    "Comércio varejista de livros",
+    "Comércio varejista de mercadorias em loja de conveniência",
+    "Comércio varejista de móveis",
+    "Comércio varejista de objetos de arte",
+    "Comércio varejista de instrumentos musicais",
+    "Comércio varejista de peças para eletroeletrônicos domésticos",
+    "Serviços de escritório e apoio administrativo",
+    "Serviços de acabamentos gráficos",
+    "Serviços de encadernação e plastificação",
+    "Serviços de gravação de carimbos",
+    "Provedores de internet e hospedagem",
+    "Produção artesanal de bordado em tecido ou tear de cunho social ou coletivo",
+    "Posto de abastecimento de uso exclusivo do detentor",
+    "Cozinhas comunitárias"
   ]},
-  { cat: 'Mineracao', itens: [
-    'Extracao de areia e cascalho','Extracao de argila','Extracao de pedra e brita',
-    'Extracao de calcario','Extracao de sal','Garimpo',
+  { cat: "Saúde", itens: [
+    "Clínica médica, odontológica ou de outros profissionais de saúde sem geração de RSS",
+    "Clínica médica, odontológica, laboratorial ou similar com geração de RSS",
+    "Farmácia e drogaria"
   ]},
-  { cat: 'Residuos', itens: [
-    'Aterro sanitario','Coleta e transporte de residuos solidos','Reciclagem e triagem de residuos',
-    'Tratamento de residuos industriais','Incineracao de residuos','Compostagem',
-    'Transbordo de residuos',
+  { cat: "Educação, Cultura e Religião", itens: [
+    "Templo religioso",
+    "Centro educacional (escola, creche, centro de ensino)",
+    "Centro educacional com geração de resíduos especiais"
   ]},
-  { cat: 'Captacao e Tratamento de Agua', itens: [
-    'Captacao de agua superficial','Captacao de agua subterranea (poco artesiano)',
-    'Estacao de Tratamento de Agua (ETA)','Estacao de Tratamento de Esgoto (ETE)',
-    'Rede de abastecimento de agua','Rede de esgotamento sanitario',
+  { cat: "Lazer, Turismo e Eventos", itens: [
+    "Hotel, pousada, casa de repouso, spa e motel",
+    "Empresa de turismo e ecoturismo",
+    "Parque aquático, hotel fazenda, balneário e clube de campo",
+    "Parque de diversões e temático permanente",
+    "Jardim zoológico, aquário e similares",
+    "Academia para práticas esportivas",
+    "Espaço para lazer e práticas esportivas (quadras e campos de futebol)",
+    "Evento privado em via pública ou área pública",
+    "Evento único comemorativo sem fins lucrativos"
   ]},
-  { cat: 'Florestal', itens: [
-    'Desmatamento e supressao de vegetacao','Reflorestamento',
-    'Carvoaria e producao de carvao vegetal','Extracao de madeira nativa',
-    'Viveiros de mudas','Unidade de conservacao',
+  { cat: "Transporte", itens: [
+    "Transporte urbano de passageiros",
+    "Transporte de passageiros e recreação aquática",
+    "Transporte aquático de cargas",
+    "Transporte aquático de cargas perigosas",
+    "Serviço aeromédico e táxi aéreo"
   ]},
-  { cat: 'Turismo e Lazer', itens: [
-    'Hotel fazenda e ecoturismo','Camping e area de lazer','Parque tematico e de diversoes',
-    'Campo e quadra esportiva','Clube e associacao recreativa','Piscina publica',
-    'Zoologico e biotério',
+  { cat: "Serviços Automotivos e Postos", itens: [
+    "Oficina mecânica e consertos de veículos em geral (sem troca de óleo)",
+    "Oficina mecânica com lanternagem e pintura",
+    "Borracharia",
+    "Posto de apoio para veículos (sem troca de óleo)",
+    "Recuperação e manutenção de botijões GLP",
+    "Comércio varejista de gás liquefeito (GLP)"
   ]},
+  { cat: "Publicidade Volante e Eventos (LVPE)", itens: [
+    "Publicidade volante e eventos (motos, bicicletas e carros de passeio)",
+    "Trio elétrico"
+  ]},
+  { cat: "Obras Civis e Urbanismo", itens: [
+    "Edificação residencial unifamiliar",
+    "Residencial unifamiliar ou comercial misto sem infraestrutura completa",
+    "Residencial unifamiliar ou comercial misto com infraestrutura completa",
+    "Residencial multifamiliar horizontal sem infraestrutura completa",
+    "Residencial multifamiliar horizontal com infraestrutura completa",
+    "Edificação vertical (condomínio)",
+    "Empreendimento industrial",
+    "Empreendimento esportivo (quadra, ginásio, campo, estádio)",
+    "Condomínio fechado rural ou urbano",
+    "Loteamento",
+    "Assentamento Rural de Reforma Agrária",
+    "Projeto de urbanização",
+    "Canteiro de obras",
+    "Dragagem, terraplanagem e desassoreamento",
+    "Usina de asfalto ou concreto",
+    "Recuperação de áreas degradadas",
+    "Construções rurais para agricultura familiar",
+    "Complexo sanitário rural",
+    "Projetos sanitários domiciliares na zona rural"
+  ]},
+  { cat: "Infraestrutura Viária e Saneamento", itens: [
+    "Pavimentação e drenagem de vias urbanas",
+    "Hidrovias",
+    "Marina e garagem de barcos",
+    "Atracadouro e molhe",
+    "Pontilhão e bueiro",
+    "Sítio aeroportuário",
+    "Ponte e viaduto",
+    "Canalização e retificação de cursos d'água",
+    "Implantação ou reparação de calçadas e ciclovias",
+    "Pavimentação e drenagem superficial de vias públicas",
+    "Tapa-buraco, reparo de meio-fio, limpeza de sarjeta e desobstrução de bueiros",
+    "Manutenção de rodovias pavimentadas",
+    "Recapeamento asfáltico",
+    "Passagem molhada"
+  ]},
+  { cat: "Indústria — Alimentos, Bebidas e Beneficiamento", itens: [
+    "Beneficiamento de leite",
+    "Fabricação de ração",
+    "Beneficiamento de pescado",
+    "Casa de extração de mel",
+    "Fabricação de doces e confeitos",
+    "Abate e processamento de carnes"
+  ]},
+  { cat: "Indústria — Minerais Não Metálicos e Cerâmica", itens: [
+    "Olaria",
+    "Fábrica de tijolos alternativos",
+    "Marmoraria (aparelho de mármore, ardósia e granito)",
+    "Britamento de pedras",
+    "Fabricação de louça, porcelana, faiança e cerâmica artística",
+    "Fabricação de material cerâmico (telhas, tijolos, ladrilhos)",
+    "Fabricação de artigos de barro cozido",
+    "Usina de beneficiamento de minérios"
+  ]},
+  { cat: "Indústria — Metalurgia e Serralheria", itens: [
+    "Serralharia",
+    "Fabricação de estruturas metálicas",
+    "Fabricação de artefatos de ferro, aço e metais trefilados",
+    "Forjaria e fundição de produtos siderúrgicos e metalúrgicos",
+    "Fundição de metais não ferrosos",
+    "Fabricação de esquadrias de metal",
+    "Fabricação de facas, facões, tesouras e talheres",
+    "Têmpera, galvanização, anodização, niquelagem e cromagem",
+    "Fabricação de máquinas e aparelhos industriais",
+    "Fabricação de equipamentos agrícolas",
+    "Fabricação de veículos a tração animal"
+  ]},
+  { cat: "Indústria — Madeira, Móveis e Papel", itens: [
+    "Serraria",
+    "Fabricação de esquadrias, tesouras e estruturas de madeira",
+    "Fabricação de móveis de madeira",
+    "Fabricação de móveis de vime ou bambu",
+    "Fabricação de artefatos de papel"
+  ]},
+  { cat: "Indústria — Têxtil, Confecções e Couros", itens: [
+    "Confecções e tecelagem",
+    "Curtume e tingimento de couros e peles"
+  ]},
+  { cat: "Indústria — Química, Plásticos e Derivados", itens: [
+    "Fabricação de material de limpeza",
+    "Fabricação de sabão",
+    "Fabricação de matérias plásticas básicas e PVC",
+    "Fabricação de amidos, dextrinas, gomas e adesivos vegetais",
+    "Fabricação de fogos de artifício",
+    "Produção de gorduras, óleos e essências vegetais",
+    "Fabricação de produtos de limpeza e polimento",
+    "Fabricação de desinfetantes",
+    "Fabricação de inseticidas, germicidas e fungicidas",
+    "Recuperação de óleos lubrificantes e óleos queimados",
+    "Fabricação de adubos e fertilizantes",
+    "Fabricação de produtos de perfumaria e cosméticos",
+    "Fabricação de sabões e detergentes",
+    "Fabricação e manipulação de produtos farmacêuticos e medicinais"
+  ]},
+  { cat: "Indústria — Elétrica, Eletrônica e Gráfica", itens: [
+    "Fabricação de materiais para instalação elétrica",
+    "Fabricação de geradores, motores, conversores e transformadores",
+    "Fabricação de aparelhos elétricos, eletrônicos e eletrodomésticos",
+    "Indústria gráfica e editorial"
+  ]}
 ];
 
 function abrirModalAtividades() {
