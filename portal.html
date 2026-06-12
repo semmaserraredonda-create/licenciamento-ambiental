@@ -1214,12 +1214,17 @@ body { font-family: var(--ff-body); background: var(--bg); color: var(--text); m
             Anexe os documentos necessários para o requerimento. Você também poderá enviar documentos adicionais após o envio, caso a SEMMA solicite.
           </p>
           <div class="erro-msg" id="err-step3"></div>
-          <label id="upload-req-area" style="display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;background:var(--bg);border:2px dashed var(--border2);border-radius:var(--radius);padding:28px;text-align:center;transition:border-color 0.15s" onmouseenter="this.style.borderColor='var(--verde2)'" onmouseleave="this.style.borderColor=''">
-            <svg viewBox="0 0 24 24" fill="none" stroke="var(--verde)" stroke-width="2" style="width:32px;height:32px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            <span style="font-size:14px;font-weight:500;color:var(--text2)">Clique para selecionar ou arraste os arquivos</span>
-            <span style="font-size:12px;color:var(--text3)">PDF, imagens, Word, Excel — até 10MB por arquivo</span>
-            <input type="file" id="req-docs-input" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx" style="display:none" onchange="adicionarDocsReq(this)">
-          </label>
+          <div id="upload-req-area" style="display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;background:var(--bg);border:2px dashed var(--border2);border-radius:var(--radius);padding:28px;text-align:center;transition:border-color 0.15s,background 0.15s"
+            onclick="document.getElementById('req-docs-input').click()"
+            ondragover="event.preventDefault();event.stopPropagation();this.style.borderColor='var(--verde2)';this.style.background='var(--verde-lt)'"
+            ondragenter="event.preventDefault();event.stopPropagation();this.style.borderColor='var(--verde2)';this.style.background='var(--verde-lt)'"
+            ondragleave="event.stopPropagation();this.style.borderColor='';this.style.background=''"
+            ondrop="event.preventDefault();event.stopPropagation();this.style.borderColor='';this.style.background='';handleDropReq(event)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--verde)" stroke-width="2" style="width:32px;height:32px;pointer-events:none"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span style="font-size:14px;font-weight:500;color:var(--text2);pointer-events:none">Clique para selecionar ou arraste os arquivos</span>
+            <span style="font-size:12px;color:var(--text3);pointer-events:none">Apenas PDF e Excel (.pdf, .xls, .xlsx) — até 10MB por arquivo</span>
+            <input type="file" id="req-docs-input" multiple accept=".pdf,.xls,.xlsx" style="display:none" onchange="adicionarDocsReq(this)">
+          </div>
           <div id="req-docs-lista" style="margin-top:12px;display:flex;flex-direction:column;gap:6px"></div>
         </div>
       </div>
@@ -1704,8 +1709,8 @@ function gerarBlocoUpload(p) {
     + ' onmouseenter="this.style.borderColor=\'var(--verde2)\'" onmouseleave="this.style.borderColor=\'\'">'
     + '<svg viewBox="0 0 24 24" fill="none" stroke="var(--verde)" stroke-width="2" style="width:28px;height:28px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>'
     + '<span style="font-size:14px;font-weight:500;color:var(--text2)">Clique para selecionar ou arraste os arquivos</span>'
-    + '<span style="font-size:12px;color:var(--text3)">PDF, imagens, Word, Excel — até 10MB por arquivo</span>'
-    + '<input type="file" id="' + inputId + '" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx" style="display:none"'
+    + '<span style="font-size:12px;color:var(--text3)">Apenas PDF e Excel (.pdf, .xls, .xlsx) — até 10MB por arquivo</span>'
+    + '<input type="file" id="' + inputId + '" multiple accept=".pdf,.xls,.xlsx" style="display:none"'
     + ' onchange="uploadDetalhe(this,\'' + p.id + '\')">'
     + '<div id="' + statusId + '" style="font-size:12px;color:var(--verde2);font-family:var(--ff-mono);min-height:16px"></div>'
     + '</label>';
@@ -2145,7 +2150,7 @@ async function verDetalhe(id) {
                 '</svg>' +
                 '<span id="' + statusId + '-count"></span>' +
                 '<input type="file" id="' + uploadId + '" multiple' +
-                  ' accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx"' +
+                  ' accept=".pdf,.xls,.xlsx"' +
                   ' style="display:none" onchange="selecionarArquivosMensagem(this,\'' + p.id + '\')">' +
               '</label>' +
 
@@ -2333,11 +2338,42 @@ function filtrarEmpreendimentos() {
 var EMP_IDX = -1;
 var DOCS_PENDENTES = [];
 
+var TIPOS_PERMITIDOS = ['application/pdf', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+var EXTS_PERMITIDAS  = ['.pdf', '.xls', '.xlsx'];
+var TAMANHO_MAX_MB   = 10;
+
+function arquivoPermitido(file) {
+  var nome = file.name.toLowerCase();
+  var extOk = EXTS_PERMITIDAS.some(function(e) { return nome.endsWith(e); });
+  return extOk;
+}
+
+function handleDropReq(event) {
+  var files = Array.from(event.dataTransfer.files);
+  processarArquivosReq(files);
+}
+
 function adicionarDocsReq(input) {
   var files = Array.from(input.files);
-  files.forEach(function(f) { DOCS_PENDENTES.push(f); });
-  renderDocsReq();
+  processarArquivosReq(files);
   input.value = '';
+}
+
+function processarArquivosReq(files) {
+  var rejeitados = [];
+  files.forEach(function(f) {
+    if (!arquivoPermitido(f)) {
+      rejeitados.push(f.name + ' (tipo não permitido)');
+    } else if (f.size > TAMANHO_MAX_MB * 1024 * 1024) {
+      rejeitados.push(f.name + ' (acima de ' + TAMANHO_MAX_MB + 'MB)');
+    } else {
+      DOCS_PENDENTES.push(f);
+    }
+  });
+  if (rejeitados.length) {
+    toast('Arquivo(s) rejeitado(s): ' + rejeitados.join('; ') + '. Apenas PDF e Excel são aceitos.', 'err');
+  }
+  renderDocsReq();
 }
 
 function removerDocReq(idx) {
@@ -2866,14 +2902,14 @@ async function submeterRequerimento() {
     return;
   }
 
-  // Endereço vem do empreendimento cadastrado
-  var end = EMP_SELECIONADO.end || '';
-  var obs = '';
-
+  var end  = EMP_SELECIONADO.end || '';
+  var lat  = EMP_SELECIONADO.lat || '';
+  var lon  = EMP_SELECIONADO.lon || '';
+  var obs  = '';
   var hoje = new Date().toISOString().split('T')[0];
   var ano  = new Date().getFullYear();
-  // Gera número de SOLICITAÇÃO (protocolo oficial só após análise do técnico)
-  var id = 'SOL-' + ano + '-' + String(Date.now()).slice(-4);
+  var id   = 'SOL-' + ano + '-' + String(Date.now()).slice(-4);
+
   try {
     var rSol = await gasPost('proximoSolicitacao', {});
     if (rSol && rSol.ok) id = rSol.id;
@@ -2895,7 +2931,6 @@ async function submeterRequerimento() {
     status: 'Aguardando Documentos',
     data:   hoje,
     obs:    obs,
-    // ITEM 13: campos de proprietário (empreendedor/responsável)
     proprietario_nome:    EMP_SELECIONADO.nome    || PORTAL.user.nome  || '',
     proprietario_cpf:     EMP_SELECIONADO.doc     || PORTAL.user.doc   || '',
     proprietario_contato: PORTAL.user.tel || EMP_SELECIONADO.tel || '',
@@ -2905,20 +2940,45 @@ async function submeterRequerimento() {
 
   showLoad('Enviando requerimento...');
   try {
+    // 1. Salvar o processo
     var res = await gasPost('salvarProcesso', { dados: np });
-    if (res.ok) {
-      PORTAL.processos.unshift(np);
-      toast('Solicitação ' + id + ' registrada! O protocolo será gerado após análise dos documentos e confirmação do pagamento.', 'ok');
-      EMP_SELECIONADO = null;
-      STEP_ATUAL = 1;
-      renderProcessos();
-      goPortal('processos', document.getElementById('ntab-processos'));
-    } else {
-      if (err) { err.textContent = 'Erro ao enviar. Tente novamente.'; err.style.display = 'block'; }
+    if (!res || !res.ok) {
+      hideLoad();
+      if (err) { err.textContent = (res && res.erro) ? res.erro : 'Erro ao enviar. Tente novamente.'; err.style.display = 'block'; }
+      return;
     }
+
+    // 2. Fazer upload dos documentos anexados (se houver)
+    if (DOCS_PENDENTES.length) {
+      showLoad('Enviando documentos (' + DOCS_PENDENTES.length + ')...');
+      for (var i = 0; i < DOCS_PENDENTES.length; i++) {
+        try {
+          var b64 = await fileToBase64Portal(DOCS_PENDENTES[i]);
+          var upRes = await gasPost('uploadDocumento', {
+            proto:    id,
+            nome:     DOCS_PENDENTES[i].name,
+            dados:    b64,
+            mimeType: DOCS_PENDENTES[i].type || 'application/octet-stream'
+          });
+          if (upRes && upRes.ok) {
+            np.docs.push({ nome: upRes.nome || DOCS_PENDENTES[i].name, link: upRes.link || '' });
+          }
+        } catch(eu) { console.warn('Falha no upload do doc:', DOCS_PENDENTES[i].name, eu); }
+      }
+    }
+
+    // 3. Feedback e redirecionamento
+    PORTAL.processos.unshift(np);
+    DOCS_PENDENTES = [];
+    renderDocsReq();
+    toast('Solicitação ' + id + ' registrada! O protocolo será gerado após análise e confirmação do pagamento.', 'ok');
+    EMP_SELECIONADO = null;
+    STEP_ATUAL = 1;
+    renderProcessos();
+    goPortal('processos', document.getElementById('ntab-processos'));
   } catch(e) {
-    if (err) { err.textContent = 'Erro de conexao. Verifique sua internet.'; err.style.display = 'block'; }
-    console.error(e);
+    if (err) { err.textContent = 'Erro de conexão. Verifique sua internet e tente novamente.'; err.style.display = 'block'; }
+    console.error('submeterRequerimento:', e);
   } finally { hideLoad(); }
 }
 
